@@ -2,4 +2,11 @@
 
 # usage, e.g.:
 # > ./run Four
+
+if [[ $# -ne 1 ]]; then
+  echo "Requires two parameters. For example:" >&2
+  echo "> ./run Four" >&2
+  exit 2
+fi
+
 spago run -m AdventOfCode.Twenty24.$1
