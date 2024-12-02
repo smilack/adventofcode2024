@@ -20,6 +20,6 @@ main = launchAff_ do
     log "Part 1:"
     -- log ""
     -- logShow $ solve1 input
-    log "Part2:"
+    log "Part 2:"
     -- log ""
     -- logShow $ solve2 input
