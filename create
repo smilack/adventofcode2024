@@ -10,6 +10,9 @@ if [[ $# -ne 2 ]]; then
 fi
 
 sed 's/$DAY/'"$1"'/g ; s/$INPUT/'"$2"'/g' src/Template > src/$1.purs
+echo "src/Template copied into src/$1.purs"
+
 sed 's/$DAY/'"$1"'/g' test/Template > test/$1.purs
+echo "test/Template copied into test/$1.purs"
 
 ./get-input $2
