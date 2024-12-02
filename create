@@ -11,8 +11,5 @@ fi
 
 sed 's/$DAY/'"$1"'/g ; s/$INPUT/'"$2"'/g' src/Template > src/$1.purs
 sed 's/$DAY/'"$1"'/g' test/Template > test/$1.purs
-echo 'Get input from:'
-echo "https://adventofcode.com/2024/day/$2/input"
-read -p "Press enter to open ./input/$2" -s
-echo ""
-vim input/$2
+
+./get-input $2

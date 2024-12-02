@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# usage e.g.:
+# > ./get-input 4
+
+if [[ $# -ne 1 ]]; then
+  echo "Requires one parameter. For example:" >&2
+  echo "> ./get-input 4" >&2
+  exit 2
+fi
+
+echo 'Get input from:'
+echo "https://adventofcode.com/2024/day/$1/input"
+read -p "Press enter to open ./input/$1" -s
+echo ""
+
+vim input/$1
