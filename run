@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# usage, e.g.:
+# > ./run Four
+spago run -m AdventOfCode.Twenty24.$1

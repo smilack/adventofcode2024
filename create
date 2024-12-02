@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# usage e.g.:
+# > ./create Four 4
+
+if [[ $# -ne 2 ]]; then
+  echo "Requires two parameters. For example:" >&2
+  echo "> ./create Four 4" >&2
+  exit 2
+fi
+
+sed 's/$DAY/'"$1"'/g ; s/$INPUT/'"$2"'/g' src/Template > src/$1.purs
+sed 's/$DAY/'"$1"'/g' test/Template > test/$1.purs
+echo 'Get input from:'
+echo "https://adventofcode.com/2024/day/$2/input"
+read -p "Press enter to open ./input/$2" -s
+echo ""
+vim input/$2
