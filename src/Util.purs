@@ -6,6 +6,7 @@ module AdventOfCode.Twenty24.Util
   , inc
   , last2
   , lines
+  , lookupWithDefault
   , modify
   , oneOf'
   , oneOfChar
@@ -14,6 +15,7 @@ module AdventOfCode.Twenty24.Util
   , range'
   , skip
   , sumMap
+  , tally
   , testParser
   , to2dArray
   , unsafeFromRight
@@ -28,7 +30,10 @@ import Data.Either (Either(..))
 import Data.Enum (class BoundedEnum, enumFromTo)
 import Data.Lens (lastOf, traversed)
 import Data.List (List, init, last, unsnoc)
-import Data.Maybe (Maybe)
+import Data.List.Lazy as Lazy
+import Data.Map (Map)
+import Data.Map as Map
+import Data.Maybe (Maybe, fromMaybe)
 import Data.String (split)
 import Data.String.CodeUnits (toCharArray)
 import Data.String.Pattern (Pattern(..))
@@ -164,3 +169,12 @@ unsafeFromRight = unsafePartial fromRight
 
 unsafeParse :: forall a. String -> Parser String a -> a
 unsafeParse inp par = unsafeFromRight $ runParser inp par
+
+-- create a map of how many times each element occurs in a list
+tally :: forall f k. Ord k => Foldable f => f k -> Map k Int
+tally = Map.fromFoldableWith (+) <<< flip Lazy.zip ones <<< Lazy.fromFoldable
+  where
+  ones = Lazy.repeat 1
+
+lookupWithDefault :: forall k v. Ord k => v -> k -> Map k v -> v
+lookupWithDefault v = fromMaybe v <.. Map.lookup
