@@ -4,11 +4,14 @@ module Test.AdventOfCode.Twenty24.One
 
 import Prelude
 
-import AdventOfCode.Twenty24.One (distances, pairUp, parse, solve1, sort)
+import AdventOfCode.Twenty24.One (distances, pairUp, parse, solve1, sort, solve2)
 import AdventOfCode.Twenty24.One.Pair (Pair(..))
+import AdventOfCode.Twenty24.Util (tally)
 import Data.List.Types (List(..), (:))
+import Data.Map (Map, fromFoldable)
+import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Test.Spec (describe, it, pending)
+import Test.Spec (describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Test.Spec.Reporter.Console (consoleReporter)
 import Test.Spec.Runner.Node (runSpecAndExitProcess)
@@ -29,7 +32,12 @@ main = runSpecAndExitProcess [ consoleReporter ] do
       it "Solves part 1" do
         solve1 puzzle1Test.input `shouldEqual` puzzle1Test.output
     describe "Part 2" do
-      pending "more stuff"
+      it "Counts occurrences in the second list" do
+        tally countTest.input `shouldEqual` countTest.output
+      it "Solves part 2" do
+        solve2 puzzle2Test.input `shouldEqual` puzzle2Test.output
+
+-- Shared
 
 parseTest :: { input :: String, output :: Pair (List Int) }
 parseTest =
@@ -52,6 +60,8 @@ inputTest =
       , b: 4 : 3 : 5 : 3 : 10 : 3 : Nil
       }
   }
+
+-- Part 1
 
 sortTest :: { input :: Pair (List Int), output :: Pair (List Int) }
 sortTest =
@@ -83,3 +93,14 @@ distanceTest =
 
 puzzle1Test :: { input :: String, output :: Int }
 puzzle1Test = inputTest { output = 12 }
+
+-- Part 2
+
+countTest :: { input :: List Int, output :: Map Int Int }
+countTest =
+  { input: 3 : 3 : 3 : 4 : 5 : 10 : Nil
+  , output: fromFoldable [ 3 /\ 3, 4 /\ 1, 5 /\ 1, 10 /\ 1 ]
+  }
+
+puzzle2Test :: { input :: String, output :: Int }
+puzzle2Test = inputTest { output = 31 }

@@ -4,20 +4,25 @@ module AdventOfCode.Twenty24.One
   , pairUp
   , parse
   , solve1
+  , solve2
   , sort
   ) where
 
 import Prelude
 
 import AdventOfCode.Twenty24.One.Pair (Pair(..))
+import AdventOfCode.Twenty24.Util (lookupWithDefault, sumMap, tally)
 import Data.Either (Either, fromRight)
 import Data.List (List(..))
 import Data.List as List
 import Data.List.Lazy as Lazy
 import Data.List.ZipList (ZipList(..))
+import Data.Map (Map)
 import Data.Newtype (unwrap)
 import Data.Ord (abs)
 import Data.Traversable (sequence, sum)
+import Data.Tuple (Tuple, uncurry)
+import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
@@ -35,9 +40,9 @@ main = launchAff_ do
     log "Part 1:"
     logShow $ solve1 input
     log "Part 2:"
+    logShow $ solve2 input
 
--- log ""
--- logShow $ solve2 input
+-- Part 1
 
 solve1 :: String -> Int
 solve1 = sum <<< distances <<< pairUp <<< sort <<< parse
@@ -58,6 +63,8 @@ distances = map distance
   where
   distance (Pair { a, b }) = abs $ a - b
 
+-- Shared
+
 parse :: String -> Pair (List Int)
 parse s = toPairedLists $ runParser s readLines
   where
@@ -75,3 +82,18 @@ readLine = do
   skipSpaces
   pure $ Pair { a, b }
 
+-- Part 2
+
+solve2 :: String -> Int
+solve2 s = sumMap score $ massLookupWithDefault 0 a $ tally b
+  where
+  Pair { a, b } = parse s
+
+  score :: Tuple Int Int -> Int
+  score = uncurry (*)
+
+massLookupWithDefault
+  :: forall f k v. Functor f => Ord k => v -> f k -> Map k v -> f (Tuple k v)
+massLookupWithDefault v f m = map get f
+  where
+  get k = k /\ lookupWithDefault v k m
