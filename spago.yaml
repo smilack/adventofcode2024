@@ -4,6 +4,7 @@ package:
     - aff
     - arrays
     - console
+    - debug
     - effect
     - either
     - enums
