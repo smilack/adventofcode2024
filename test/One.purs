@@ -44,11 +44,12 @@ inputTest =
 4   3
 2   5
 1   3
-3   9
-3   3"""
+3   10
+3   3
+"""
   , output: Pair
       { a: 3 : 4 : 2 : 1 : 3 : 3 : Nil
-      , b: 4 : 3 : 5 : 3 : 9 : 3 : Nil
+      , b: 4 : 3 : 5 : 3 : 10 : 3 : Nil
       }
   }
 
@@ -57,7 +58,7 @@ sortTest =
   { input: inputTest.output
   , output: Pair
       { a: 1 : 2 : 3 : 3 : 3 : 4 : Nil
-      , b: 3 : 3 : 3 : 4 : 5 : 9 : Nil
+      , b: 3 : 3 : 3 : 4 : 5 : 10 : Nil
       }
   }
 
@@ -70,15 +71,15 @@ sequenceTest =
         : Pair { a: 3, b: 3 }
         : Pair { a: 3, b: 4 }
         : Pair { a: 3, b: 5 }
-        : Pair { a: 4, b: 9 }
+        : Pair { a: 4, b: 10 }
         : Nil
   }
 
 distanceTest :: { input :: List (Pair Int), output :: List Int }
 distanceTest =
   { input: sequenceTest.output
-  , output: 2 : 1 : 0 : 1 : 2 : 5 : Nil
+  , output: 2 : 1 : 0 : 1 : 2 : 6 : Nil
   }
 
 puzzle1Test :: { input :: String, output :: Int }
-puzzle1Test = inputTest { output = 11 }
+puzzle1Test = inputTest { output = 12 }

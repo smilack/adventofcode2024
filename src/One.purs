@@ -69,9 +69,9 @@ readLines = many readLine
 
 readLine :: Parser String (Pair Int)
 readLine = do
-  skipSpaces
   a <- intDecimal
   skipSpaces
   b <- intDecimal
+  skipSpaces
   pure $ Pair { a, b }
 
