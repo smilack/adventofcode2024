@@ -11,3 +11,5 @@ generated-docs/
 .psa*
 .spago
 /input/
+.vscode*
+.spec-results

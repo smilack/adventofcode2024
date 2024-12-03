@@ -1,9 +1,28 @@
 package:
   name: adventofcode2024
   dependencies:
+    - aff
+    - arrays
     - console
     - effect
+    - either
+    - enums
+    - foldable-traversable
+    - lists
+    - maybe
+    - node-fs
+    - parsing
+    - point-free
     - prelude
+    - profunctor-lenses
+    - quickcheck
+    - record
+    - spec
+    - spec-node
+    - spec-quickcheck
+    - strings
+    - transformers
+    - tuples
   test:
     main: Test.Main
     dependencies: []
