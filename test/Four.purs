@@ -2,20 +2,15 @@ module Test.AdventOfCode.Twenty24.Four
   ( main
   ) where
 
-import AdventOfCode.Twenty24.Util
 import Prelude
 
-import AdventOfCode.Twenty24.Four (Point(..), parse, solve1)
+import AdventOfCode.Twenty24.Four (Point(..), parse, solve1, solve2)
 import Data.Map (Map)
 import Data.Map as Map
-import Data.String (split)
-import Data.String.Pattern (Pattern(..))
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Test.QuickCheck ((===), Result)
-import Test.Spec (pending, describe, it)
+import Test.Spec (describe, it)
 import Test.Spec.Assertions (shouldEqual)
-import Test.Spec.QuickCheck (quickCheck)
 import Test.Spec.Reporter.Console (consoleReporter)
 import Test.Spec.Runner.Node (runSpecAndExitProcess)
 
@@ -29,7 +24,10 @@ main = runSpecAndExitProcess [ consoleReporter ] do
       it "Solves part 1" do
         solve1 input `shouldEqual` solution1
     describe "Part 2" do
-      pending "more stuff"
+      it "Solves mini part 2" do
+        solve2 miniSolution2.input `shouldEqual` miniSolution2.output
+      it "Solves part 2" do
+        solve2 solution2.input `shouldEqual` solution2.output
 
 parseTest :: { input :: String, output :: Map Point Char }
 parseTest =
@@ -88,14 +86,14 @@ parseTest2 =
       ]
   }
 
-miniSolution2 :: { input :: Map Point Char, output :: Int }
+miniSolution2 :: { input :: String, output :: Int }
 miniSolution2 =
-  { input: parseTest2.output
+  { input: parseTest2.input
   , output: 1
   }
 
-solution2 :: { input :: Map Point Char, output :: Int }
+solution2 :: { input :: String, output :: Int }
 solution2 =
-  { input: parse input
+  { input
   , output: 9
   }

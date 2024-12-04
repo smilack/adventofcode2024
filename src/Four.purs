@@ -3,23 +3,24 @@ module AdventOfCode.Twenty24.Four
   , main
   , parse
   , solve1
+  , solve2
   ) where
 
-import AdventOfCode.Twenty24.Util
+import AdventOfCode.Twenty24.Util (sumMap)
 import Prelude
 
 import Control.Alt ((<|>))
 import Data.Either (fromRight)
 import Data.FoldableWithIndex (foldrWithIndex)
 import Data.Generic.Rep (class Generic)
-import Data.List (List(..), (:))
+import Data.List (List(..), elem, (:))
 import Data.Map (Map, lookup)
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
-import Data.Traversable (sequence, traverse)
+import Data.Traversable (for, traverse)
 import Data.Tuple (Tuple)
-import Data.Tuple.Nested (Tuple3, (/\))
+import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
@@ -30,7 +31,6 @@ import Parsing (Parser, Position(..), position, runParser)
 import Parsing.Combinators (many, try)
 import Parsing.String (char)
 import Parsing.String.Basic (skipSpaces)
-import PointFree ((<..))
 
 main :: Effect Unit
 main = launchAff_ do
@@ -39,18 +39,21 @@ main = launchAff_ do
     log "Part 1:"
     logShow $ solve1 input
     log "Part 2:"
-
--- log ""
--- logShow $ solve2 input
+    logShow $ solve2 input
 
 solve1 :: String -> Int
-solve1 = checkGrid <<< parse
+solve1 = checkGrid checkX <<< parse
 
-checkGrid :: Map Point Char -> Int
-checkGrid m = foldrWithIndex (checkPoint m) 0 m
+solve2 :: String -> Int
+solve2 = checkGrid checkA <<< parse
 
-checkPoint :: Map Point Char -> Point -> Char -> Int -> Int
-checkPoint m p c acc = acc + case c of
+checkGrid :: CheckFn -> Map Point Char -> Int
+checkGrid cf m = foldrWithIndex (cf m) 0 m
+
+type CheckFn = Map Point Char -> Point -> Char -> Int -> Int
+
+checkX :: Map Point Char -> Point -> Char -> Int -> Int
+checkX m p c acc = acc + case c of
   'X' -> chexmas p m
   _ -> 0
 
@@ -62,7 +65,7 @@ chexmas p m = sumMap check directions
     _ -> 0
 
 parse :: String -> Map Point Char
-parse s = Map.fromFoldable $ fromRight Nil $ runParser s grid
+parse str = Map.fromFoldable $ fromRight Nil $ runParser str grid
 
 grid :: Parser String (List (Tuple Point Char))
 grid = try $ many do
@@ -119,3 +122,29 @@ ne = shift 1 (-1) : shift 2 (-2) : shift 3 (-3) : Nil
 
 directions :: List Direction
 directions = e : se : s : sw : w : nw : n : ne : Nil
+
+-- part 2
+
+tlbr :: Direction
+tlbr = shift (-1) (-1) : shift 1 1 : Nil
+
+bltr :: Direction
+bltr = shift (-1) 1 : shift 1 (-1) : Nil
+
+mases :: List (List Char)
+mases = ('M' : 'S' : Nil) : ('S' : 'M' : Nil) : Nil
+
+isXmas :: Point -> Map Point Char -> Int
+isXmas p m = if solidus && reverseSolidus then 1 else 0
+  where
+  diagonal shifts = for (flap shifts p) (_ `lookup` m)
+  solidus = isMas $ diagonal bltr
+  reverseSolidus = isMas $ diagonal tlbr
+  isMas = case _ of
+    Just chars -> elem chars mases
+    Nothing -> false
+
+checkA :: Map Point Char -> Point -> Char -> Int -> Int
+checkA m p c acc = acc + case c of
+  'A' -> isXmas p m
+  _ -> 0
