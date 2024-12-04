@@ -2,20 +2,15 @@ module Test.AdventOfCode.Twenty24.Three
   ( main
   ) where
 
-import AdventOfCode.Twenty24.Three
-import AdventOfCode.Twenty24.Util
-import Prelude
+import AdventOfCode.Twenty24.Three (compute, filterEnabled, parse, solve1, solve2)
+import Prelude (Unit, discard)
 
 import Data.List (List(..), (:))
-import Data.String (split)
-import Data.String.Pattern (Pattern(..))
 import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Test.QuickCheck ((===), Result)
-import Test.Spec (Spec, pending, describe, it)
+import Test.Spec (describe, it)
 import Test.Spec.Assertions (shouldEqual)
-import Test.Spec.QuickCheck (quickCheck)
 import Test.Spec.Reporter.Console (consoleReporter)
 import Test.Spec.Runner.Node (runSpecAndExitProcess)
 
@@ -30,7 +25,10 @@ main = runSpecAndExitProcess [ consoleReporter ] do
       it "Solves part 1" do
         solve1 input `shouldEqual` solution1
     describe "Part 2" do
-      pending "more stuff"
+      it "Eliminates disabled segments" do
+        filterEnabled input2 `shouldEqual` enabled
+      it "Solves part 2" do
+        solve2 input2 `shouldEqual` solution2
 
 input :: String
 input =
@@ -41,3 +39,13 @@ mulPairs = (2 /\ 4) : (5 /\ 5) : (11 /\ 8) : (8 /\ 5) : Nil
 
 solution1 :: Int
 solution1 = 161
+
+input2 :: String
+input2 =
+  "xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))"
+
+enabled :: String
+enabled = "xmul(2,4)&mul[3,7]!^?mul(8,5))"
+
+solution2 :: Int
+solution2 = 48
