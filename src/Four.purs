@@ -1,5 +1,6 @@
 module AdventOfCode.Twenty24.Four
   ( main
+  , solve1
   ) where
 
 import Prelude
@@ -21,5 +22,9 @@ main = launchAff_ do
     -- log ""
     -- logShow $ solve1 input
     log "Part 2:"
-    -- log ""
-    -- logShow $ solve2 input
+
+-- log ""
+-- logShow $ solve2 input
+
+solve1 :: String -> Int
+solve1 = const 0
