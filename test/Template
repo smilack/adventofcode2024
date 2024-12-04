@@ -2,11 +2,10 @@ module Test.AdventOfCode.Twenty24.$DAY
   ( main
   ) where
 
-import Prelude
-import AdventOfCode.Twenty24.$DAY
-import AdventOfCode.Twenty24.Util
-import Data.String (split)
-import Data.String.Pattern (Pattern(..))
+import Test.AdventOfCode.Prelude
+
+-- import AdventOfCode.Twenty24.$DAY ()
+-- import AdventOfCode.Twenty24.Util ()
 import Effect (Effect)
 import Test.QuickCheck ((===), Result)
 import Test.Spec (pending, describe, it)

@@ -2,9 +2,9 @@ module AdventOfCode.Twenty24.$DAY
   ( main
   ) where
 
-import Prelude
-import AdventOfCode.Twenty24.Util
+import AdventOfCode.Prelude
 
+-- import AdventOfCode.Twenty24.Util ()
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
@@ -18,8 +18,7 @@ main = launchAff_ do
   input <- readTextFile UTF8 "./input/$INPUT"
   liftEffect do
     log "Part 1:"
-    -- log ""
     -- logShow $ solve1 input
     log "Part 2:"
-    -- log ""
     -- logShow $ solve2 input
+    log "End"
