@@ -2,21 +2,15 @@ module Test.AdventOfCode.Twenty24.Two
   ( main
   ) where
 
-import AdventOfCode.Twenty24.Util
 import Prelude
 
-import AdventOfCode.Twenty24.Two (Safety(..), check, countSafe, parse, solve1)
+import AdventOfCode.Twenty24.Two (Safety(..), check, countSafe, doubleCheck, parse, solve1)
 import Data.List (List(..), fromFoldable, (:))
 import Data.List.NonEmpty (cons')
 import Data.List.Types (NonEmptyList)
-import Data.String (split)
-import Data.String.Pattern (Pattern(..))
 import Effect (Effect)
-import Effect.Aff (launchAff_)
-import Test.QuickCheck ((===), Result)
-import Test.Spec (Spec, pending, describe, it)
+import Test.Spec (describe, it)
 import Test.Spec.Assertions (shouldEqual)
-import Test.Spec.QuickCheck (quickCheck)
 import Test.Spec.Reporter.Console (consoleReporter)
 import Test.Spec.Runner.Node (runSpecAndExitProcess)
 
@@ -37,7 +31,8 @@ main = runSpecAndExitProcess [ consoleReporter ] do
       it "Solves part 1" do
         solve1 input `shouldEqual` 2
     describe "Part 2" do
-      pending "more stuff"
+      it "Double checks reports" do
+        map doubleCheck double `shouldEqual` doublesafe
 
 input :: String
 input = "7 6 4 2 1\n1 2 7 8 9\n9 7 6 2 1\n1 3 2 4 5\n8 6 4 4 1\n1 3 6 7 9"
@@ -65,5 +60,21 @@ safety = fromFoldable
   , Unsafe
   , Unsafe
   , Unsafe
+  , Safe
+  ]
+
+double :: List (NonEmptyList Int)
+double = fromFoldable
+  [ cons' 1 $ 2 : 7 : 8 : 9 : Nil
+  , cons' 9 $ 7 : 6 : 2 : 1 : Nil
+  , cons' 1 $ 3 : 2 : 4 : 5 : Nil
+  , cons' 8 $ 6 : 4 : 4 : 1 : Nil
+  ]
+
+doublesafe :: List Safety
+doublesafe = fromFoldable
+  [ Unsafe
+  , Unsafe
+  , Safe
   , Safe
   ]
