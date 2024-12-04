@@ -1,6 +1,7 @@
 module AdventOfCode.Twenty24.Util
   ( between'
   , dec
+  , eol
   , genericParser
   , hSqrt
   , inc
@@ -8,12 +9,14 @@ module AdventOfCode.Twenty24.Util
   , lines
   , lookupWithDefault
   , modify
+  , multiline
   , oneOf'
   , oneOfChar
   , oneOfString
   , penultimate
   , range'
   , skip
+  , spaced
   , sumMap
   , tally
   , testParser
@@ -31,6 +34,7 @@ import Data.Enum (class BoundedEnum, enumFromTo)
 import Data.Lens (lastOf, traversed)
 import Data.List (List, init, last, unsnoc)
 import Data.List.Lazy as Lazy
+import Data.List.Types (NonEmptyList)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe, fromMaybe)
@@ -42,7 +46,7 @@ import Data.Traversable (class Foldable, class Traversable, foldl)
 import Data.Tuple (Tuple(..), fst)
 import Effect.Aff (Error)
 import Parsing (Parser, runParser)
-import Parsing.Combinators (choice, try, (<?>))
+import Parsing.Combinators (choice, sepBy1, sepEndBy, try, (<?>), (<|>))
 import Parsing.String (char, string)
 import Partial.Unsafe (unsafePartial)
 import PointFree ((<..))
@@ -178,3 +182,12 @@ tally = Map.fromFoldableWith (+) <<< flip Lazy.zip ones <<< Lazy.fromFoldable
 
 lookupWithDefault :: forall k v. Ord k => v -> k -> Map k v -> v
 lookupWithDefault v = fromMaybe v <.. Map.lookup
+
+spaced :: forall a. Parser String a -> Parser String (NonEmptyList a)
+spaced = (_ `sepBy1` string " ")
+
+multiline :: forall a. Parser String a -> Parser String (List a)
+multiline = (_ `sepEndBy` eol)
+
+eol :: Parser String String
+eol = string "\n" <|> string "\r\n"

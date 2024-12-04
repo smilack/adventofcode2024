@@ -9,9 +9,9 @@ module AdventOfCode.Twenty24.Two
   , solve2
   ) where
 
-import AdventOfCode.Twenty24.Util (lookupWithDefault, tally)
 import Prelude
 
+import AdventOfCode.Twenty24.Util (lookupWithDefault, multiline, spaced, tally)
 import Data.Either (fromRight)
 import Data.Generic.Rep (class Generic)
 import Data.List (List(..), (:), snoc)
@@ -29,8 +29,6 @@ import Effect.Console (log, logShow)
 import Node.Encoding (Encoding(..))
 import Node.FS.Aff (readTextFile)
 import Parsing (Parser, runParser)
-import Parsing.Combinators (sepBy1, sepEndBy, (<|>))
-import Parsing.String (string)
 import Parsing.String.Basic (intDecimal)
 import PointFree ((<..))
 
@@ -83,13 +81,10 @@ parse :: String -> List (NonEmptyList Int)
 parse s = fromRight Nil $ runParser s readReports
 
 readReports :: Parser String (List (NonEmptyList Int))
-readReports = readReport `sepEndBy` eol
+readReports = multiline readReport
 
 readReport :: Parser String (NonEmptyList Int)
-readReport = intDecimal `sepBy1` string " "
-
-eol :: Parser String String
-eol = string "\n" <|> string "\r\n"
+readReport = spaced intDecimal
 
 doubleCheck :: NonEmptyList Int -> Safety
 doubleCheck nel = case check nel of
