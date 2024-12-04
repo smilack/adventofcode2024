@@ -2,11 +2,15 @@ module Test.AdventOfCode.Twenty24.Four
   ( main
   ) where
 
-import Prelude
-import AdventOfCode.Twenty24.Four (solve1)
 import AdventOfCode.Twenty24.Util
+import Prelude
+
+import AdventOfCode.Twenty24.Four (Point(..), parse, solve1)
+import Data.Map (Map)
+import Data.Map as Map
 import Data.String (split)
 import Data.String.Pattern (Pattern(..))
+import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Test.QuickCheck ((===), Result)
 import Test.Spec (pending, describe, it)
@@ -19,12 +23,28 @@ main :: Effect Unit
 main = runSpecAndExitProcess [ consoleReporter ] do
   describe "Day Four" do
     describe "Part 1" do
-      pending "parse input"
-      pending "other stuff"
+      it "parses input" do
+        parse parseTest.input `shouldEqual` parseTest.output
       it "Solves part 1" do
         solve1 input `shouldEqual` solution1
     describe "Part 2" do
       pending "more stuff"
+
+parseTest :: { input :: String, output :: Map Point Char }
+parseTest =
+  { input: "MMM\nMSA\nAMX\n"
+  , output: Map.fromFoldable
+      [ (Point { x: 0, y: 0 }) /\ 'M'
+      , (Point { x: 1, y: 0 }) /\ 'M'
+      , (Point { x: 2, y: 0 }) /\ 'M'
+      , (Point { x: 0, y: 1 }) /\ 'M'
+      , (Point { x: 1, y: 1 }) /\ 'S'
+      , (Point { x: 2, y: 1 }) /\ 'A'
+      , (Point { x: 0, y: 2 }) /\ 'A'
+      , (Point { x: 1, y: 2 }) /\ 'M'
+      , (Point { x: 2, y: 2 }) /\ 'X'
+      ]
+  }
 
 input :: String
 input =
