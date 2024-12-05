@@ -4,13 +4,14 @@ module Test.AdventOfCode.Twenty24.Five
 
 import Test.AdventOfCode.Prelude
 
-import AdventOfCode.Twenty24.Five (Manual(..), Page, Pages, Rule, combine, manual, middle, puzzleInput, rule)
+import AdventOfCode.Twenty24.Five (Manual(..), Page, Pages, Rule, combine, manual, middle, puzzleInput, rule, solve1, validManuals)
 import AdventOfCode.Twenty24.Util (multiline, testParser)
 import Control.Monad.Error.Class (class MonadThrow)
 import Data.List (List(..), (:))
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
+import Data.Set as Set
 import Data.Tuple.Nested (type (/\), (/\))
 import Effect (Effect)
 import Effect.Exception (Error)
@@ -44,7 +45,10 @@ main = runSpecAndExitProcess [ consoleReporter ] do
           testParser parserTest.b.input parserTest.b.output (multiline manual)
         it "full input" do
           testParser parserTest.c.input parserTest.c.output puzzleInput
-      pending "other stuff"
+      it "finds valid manuals" do
+        validManuals inputStrings.ab `shouldEqual` validTest
+      it "solve part 1" do
+        solve1 inputStrings.ab `shouldEqual` 143
     describe "Part 2" do
       pending "more stuff"
 
@@ -74,9 +78,6 @@ middleTest =
   , c: { input: Nil, output: Nothing }
   , d: { input: 1 : Nil, output: Just 1 }
   }
-
-mapTest :: { input :: String, output :: Map Page Pages }
-mapTest = { input: inputStrings.a, output: ruleMap }
 
 parserTest
   :: { a :: Test String (List Rule)
@@ -131,11 +132,17 @@ ruleList = (47 /\ 53) : (97 /\ 13) : (97 /\ 61) : (97 /\ 47) : (75 /\ 29)
 ruleMap :: Map Page Pages
 ruleMap =
   Map.fromFoldable $
-    (13 /\ (53 : 75 : 47 : 29 : 61 : 97 : Nil))
-    : (29 /\ (47 : 61 : 53 : 97 : 75 : Nil))
-    : (47 /\ (75 : 97 : Nil))
-    : (53 /\ (97 : 61 : 75 : 47 : Nil))
-    : (61 /\ (75 : 47 : 97 : Nil))
-    : (75 /\ (97 : Nil))
+    (13 /\ Set.fromFoldable (53 : 75 : 47 : 29 : 61 : 97 : Nil))
+    : (29 /\ Set.fromFoldable (47 : 61 : 53 : 97 : 75 : Nil))
+    : (47 /\ Set.fromFoldable (75 : 97 : Nil))
+    : (53 /\ Set.fromFoldable (97 : 61 : 75 : 47 : Nil))
+    : (61 /\ Set.fromFoldable (75 : 47 : 97 : Nil))
+    : (75 /\ Set.fromFoldable (97 : Nil))
     : Nil
 
+validTest :: List Manual
+validTest =
+  Manual (75 : 47 : 61 : 53 : 29 : Nil)
+    : Manual (97 : 61 : 53 : 29 : 13 : Nil)
+    : Manual (75 : 29 : 13 : Nil)
+    : Nil

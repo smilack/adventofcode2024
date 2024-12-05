@@ -9,14 +9,20 @@ module AdventOfCode.Twenty24.Five
   , middle
   , puzzleInput
   , rule
+  , solve1
+  , validManuals
   ) where
 
 import AdventOfCode.Prelude
 
 import AdventOfCode.Twenty24.Util (eol, multiline)
+import Data.Foldable (elem, sum)
+import Data.List (filter)
 import Data.List as List
 import Data.Map as Map
 import Data.Maybe (fromMaybe)
+import Data.Set (Set, member)
+import Data.Set as Set
 import Data.Tuple (swap)
 import Node.Encoding (Encoding(..))
 import Node.FS.Aff (readTextFile)
@@ -30,12 +36,31 @@ main = launchAff_ do
   input <- readTextFile UTF8 "./input/5"
   liftEffect do
     log "Part 1:"
-    -- logShow $ solve1 input
+    logShow $ solve1 input
     log "Part 2:"
     -- logShow $ solve2 input
     log "End"
 
--- solve1 :: 
+solve1 :: String -> Int
+solve1 = sum <<< map (fromMaybe 0 <<< middle <<< un Manual) <<< validManuals
+
+validManuals :: String -> List Manual
+validManuals s = filter (checkManual rules) manuals
+  where
+  rules /\ manuals = parse s
+
+checkManual :: Map Page Pages -> Manual -> Boolean
+checkManual rules m = go pages m
+  where
+  pages = Set.fromFoldable $ unwrap m
+
+  go _ (Manual Nil) = true
+  go valid (Manual (p : ps))
+    | p `member` valid = go (cutPages valid p) (Manual ps)
+    | otherwise = false
+
+  cutPages valid page =
+    Set.difference valid $ fromMaybe Set.empty $ Map.lookup page rules
 
 middle :: forall a. List a -> Maybe a
 middle = go
@@ -47,9 +72,9 @@ middle = go
 
 type Page = Int
 
-type Pages = List Page
+type Pages = Set Page
 
-newtype Manual = Manual Pages
+newtype Manual = Manual (List Page)
 
 derive instance Newtype Manual _
 derive instance Eq Manual
@@ -71,7 +96,7 @@ puzzleInput = do
   pure $ combine r /\ m
 
 combine :: List Rule -> Map Page Pages
-combine = Map.fromFoldableWith (<>) <<< map (map List.singleton <<< swap)
+combine = Map.fromFoldableWith (<>) <<< map (map Set.singleton <<< swap)
 
 rule :: Parser String Rule
 rule = do
