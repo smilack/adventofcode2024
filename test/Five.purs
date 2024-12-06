@@ -4,7 +4,7 @@ module Test.AdventOfCode.Twenty24.Five
 
 import Test.AdventOfCode.Prelude
 
-import AdventOfCode.Twenty24.Five (Manual(..), Page, Pages, Rule, combine, manual, middle, puzzleInput, rule, solve1, validManuals)
+import AdventOfCode.Twenty24.Five (Manual(..), Page, Pages, Rule, combine, fixManual, manual, middle, puzzleInput, rule, solve1, validManuals)
 import AdventOfCode.Twenty24.Util (multiline, testParser)
 import Control.Monad.Error.Class (class MonadThrow)
 import Data.List (List(..), (:))
@@ -50,7 +50,13 @@ main = runSpecAndExitProcess [ consoleReporter ] do
       it "solve part 1" do
         solve1 inputStrings.ab `shouldEqual` 143
     describe "Part 2" do
-      pending "more stuff"
+      describe "fixes manuals" do
+        it "a" do
+          test fixTest.a (fixManual ruleMap)
+        it "b" do
+          test fixTest.b (fixManual ruleMap)
+        it "c" do
+          test fixTest.c (fixManual ruleMap)
 
 type Test a b = { input :: a, output :: b }
 
@@ -146,3 +152,23 @@ validTest =
     : Manual (97 : 61 : 53 : 29 : 13 : Nil)
     : Manual (75 : 29 : 13 : Nil)
     : Nil
+
+fixTest
+  :: { a :: Test Manual Manual
+     , b :: Test Manual Manual
+     , c :: Test Manual Manual
+     }
+fixTest =
+  { a:
+      { input: Manual (75 : 97 : 47 : 61 : 53 : Nil)
+      , output: Manual (97 : 75 : 47 : 61 : 53 : Nil)
+      }
+  , b:
+      { input: Manual (61 : 13 : 29 : Nil)
+      , output: Manual (61 : 29 : 13 : Nil)
+      }
+  , c:
+      { input: Manual (97 : 13 : 75 : 29 : 47 : Nil)
+      , output: Manual (97 : 75 : 47 : 29 : 13 : Nil)
+      }
+  }

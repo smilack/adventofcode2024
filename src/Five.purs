@@ -4,12 +4,14 @@ module AdventOfCode.Twenty24.Five
   , Pages
   , Rule
   , combine
+  , fixManual
   , main
   , manual
   , middle
   , puzzleInput
   , rule
   , solve1
+  , solve2
   , validManuals
   ) where
 
@@ -42,7 +44,10 @@ main = launchAff_ do
     log "End"
 
 solve1 :: String -> Int
-solve1 = sum <<< map (fromMaybe 0 <<< middle <<< un Manual) <<< validManuals
+solve1 = addMiddles <<< validManuals
+
+addMiddles :: List Manual -> Int
+addMiddles = sum <<< map (fromMaybe 0 <<< middle <<< un Manual)
 
 validManuals :: String -> List Manual
 validManuals s = filter (checkManual rules) manuals
@@ -108,3 +113,18 @@ rule = do
 
 manual :: Parser String Manual
 manual = (Manual <<< List.fromFoldable) <$> (intDecimal `sepBy1` string ",")
+
+-- part 2
+
+solve2 :: String -> Int
+solve2 s = addMiddles $ map (fixManual rules) $ invalidManuals rules manuals
+  where
+  rules /\ manuals = parse s
+
+invalidManuals :: Map Page Pages -> List Manual -> List Manual
+invalidManuals rules manuals = filter (not <<< checkManual rules) manuals
+
+fixManual :: Map Page Pages -> Manual -> Manual
+fixManual rules = over Manual fix
+  where
+  fix m = m
