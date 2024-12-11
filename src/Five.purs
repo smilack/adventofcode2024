@@ -16,10 +16,11 @@ module AdventOfCode.Twenty24.Five
   ) where
 
 import AdventOfCode.Prelude
+import Prelude
 
 import AdventOfCode.Twenty24.Util (eol, multiline)
 import Data.Foldable (elem, sum)
-import Data.List (filter)
+import Data.List (filter, sortBy)
 import Data.List as List
 import Data.Map as Map
 import Data.Maybe (fromMaybe)
@@ -29,7 +30,7 @@ import Data.Tuple (swap)
 import Node.Encoding (Encoding(..))
 import Node.FS.Aff (readTextFile)
 import Parsing (Parser)
-import Parsing.Combinators (sepBy, sepBy1, sepEndBy, sepEndBy1)
+import Parsing.Combinators (sepBy1)
 import Parsing.String (string)
 import Parsing.String.Basic (intDecimal, skipSpaces)
 
@@ -40,7 +41,7 @@ main = launchAff_ do
     log "Part 1:"
     logShow $ solve1 input
     log "Part 2:"
-    -- logShow $ solve2 input
+    logShow $ solve2 input
     log "End"
 
 solve1 :: String -> Int
@@ -127,4 +128,11 @@ invalidManuals rules manuals = filter (not <<< checkManual rules) manuals
 fixManual :: Map Page Pages -> Manual -> Manual
 fixManual rules = over Manual fix
   where
-  fix m = m
+  fix m = sortBy (comparePage rules) m
+
+comparePage :: Map Page Pages -> Page -> Page -> Ordering
+comparePage m p q
+  | q `elem` fold (Map.lookup p m) = GT
+  | p `elem` fold (Map.lookup q m) = LT
+  | otherwise = EQ
+

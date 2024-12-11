@@ -4,7 +4,7 @@ module Test.AdventOfCode.Twenty24.Five
 
 import Test.AdventOfCode.Prelude
 
-import AdventOfCode.Twenty24.Five (Manual(..), Page, Pages, Rule, combine, fixManual, manual, middle, puzzleInput, rule, solve1, validManuals)
+import AdventOfCode.Twenty24.Five (Manual(..), Page, Pages, Rule, combine, fixManual, manual, middle, puzzleInput, rule, solve1, solve2, validManuals)
 import AdventOfCode.Twenty24.Util (multiline, testParser)
 import Control.Monad.Error.Class (class MonadThrow)
 import Data.List (List(..), (:))
@@ -16,10 +16,8 @@ import Data.Tuple.Nested (type (/\), (/\))
 import Effect (Effect)
 import Effect.Exception (Error)
 import Parsing.Combinators (many)
-import Test.QuickCheck ((===), Result)
-import Test.Spec (pending, describe, it)
+import Test.Spec (describe, it)
 import Test.Spec.Assertions (shouldEqual)
-import Test.Spec.QuickCheck (quickCheck)
 import Test.Spec.Reporter.Console (consoleReporter)
 import Test.Spec.Runner.Node (runSpecAndExitProcess)
 
@@ -28,35 +26,27 @@ main = runSpecAndExitProcess [ consoleReporter ] do
   describe "Day Five" do
     describe "Part 1" do
       describe "Finds middle element of a list" do
-        it "odd list" do
-          test middleTest.a middle
-        it "even list" do
-          test middleTest.b middle
-        it "empty list" do
-          test middleTest.c middle
-        it "singleton list" do
-          test middleTest.d middle
+        it "odd list" $ test middleTest.a middle
+        it "even list" $ test middleTest.b middle
+        it "empty list" $ test middleTest.c middle
+        it "singleton list" $ test middleTest.d middle
       describe "parses input" do
         it "rules" do
           testParser parserTest.a.input parserTest.a.output (many rule)
-        it "Consolidates rules" do
-          combine ruleList `shouldEqual` ruleMap
+        it "Consolidates rules" $ combine ruleList `shouldEqual` ruleMap
         it "manuals" do
           testParser parserTest.b.input parserTest.b.output (multiline manual)
         it "full input" do
           testParser parserTest.c.input parserTest.c.output puzzleInput
       it "finds valid manuals" do
         validManuals inputStrings.ab `shouldEqual` validTest
-      it "solve part 1" do
-        solve1 inputStrings.ab `shouldEqual` 143
+      it "solve part 1" $ solve1 inputStrings.ab `shouldEqual` 143
     describe "Part 2" do
       describe "fixes manuals" do
-        it "a" do
-          test fixTest.a (fixManual ruleMap)
-        it "b" do
-          test fixTest.b (fixManual ruleMap)
-        it "c" do
-          test fixTest.c (fixManual ruleMap)
+        it "a" $ test fixTest.a (fixManual ruleMap)
+        it "b" $ test fixTest.b (fixManual ruleMap)
+        it "c" $ test fixTest.c (fixManual ruleMap)
+      it "solves part 2" $ test solution2test solve2
 
 type Test a b = { input :: a, output :: b }
 
@@ -171,4 +161,10 @@ fixTest =
       { input: Manual (97 : 13 : 75 : 29 : 47 : Nil)
       , output: Manual (97 : 75 : 47 : 29 : 13 : Nil)
       }
+  }
+
+solution2test :: Test String Int
+solution2test =
+  { input: inputStrings.ab
+  , output: 123
   }
