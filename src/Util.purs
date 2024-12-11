@@ -1,5 +1,6 @@
 module AdventOfCode.Twenty24.Util
-  ( between'
+  ( SimpleTest
+  , between'
   , dec
   , eol
   , genericParser
@@ -15,6 +16,7 @@ module AdventOfCode.Twenty24.Util
   , oneOfString
   , penultimate
   , range'
+  , simpleTest
   , skip
   , spaced
   , sumMap
@@ -220,3 +222,15 @@ multiline = (_ `sepEndBy` eol)
 
 eol :: Parser String String
 eol = string "\n" <|> string "\r\n"
+
+type SimpleTest a b = { input :: a, output :: b }
+
+simpleTest
+  :: forall (a :: Type) (m :: Type -> Type) (t :: Type)
+   . MonadThrow Error m
+  => Show t
+  => Eq t
+  => SimpleTest a t
+  -> (a -> t)
+  -> m Unit
+simpleTest { input, output } f = f input `shouldEqual` output
