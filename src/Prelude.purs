@@ -38,7 +38,7 @@ import Data.Tuple.Nested (type (/\), (/\)) as Exports
 
 import Data.Traversable
   (class Foldable, class Traversable, traverse, sequence, for, foldl, foldr
-  , foldMap, fold
+  , foldMap, fold, intercalate
   ) as Exports
 
 import Effect (Effect) as Exports
@@ -49,4 +49,4 @@ import Effect.Console (log, logShow) as Exports
 import Parsing (Parser, runParser) as Exports
 import Parsing.Combinators (many, try) as Exports
 
-import PointFree ((<..)) as Exports
+import PointFree ((<..), (<...)) as Exports
