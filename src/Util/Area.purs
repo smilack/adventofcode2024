@@ -70,21 +70,22 @@ instance FoldableWithIndex Coord Area where
   foldMapWithIndex = foldMapWithIndexDefaultL
 
 foldrWithIndexArea :: forall a b. (Coord -> a -> b -> b) -> b -> Area a -> b
-foldrWithIndexArea iab2b b a@(Area m) =
-  foldMatrixWithIndex (length m - 1) dec f b a
-  where
-  f r = foldrWithIndex (iab2b <<< mkCoordRC r)
+foldrWithIndexArea iab2b b a@(Area m) = foldMatrixWithIndex
+  (length m - 1)
+  dec
+  (\i -> foldrWithIndex (iab2b <<< i))
+  b
+  a
 
 foldlWithIndexArea :: forall a b. (Coord -> b -> a -> b) -> b -> Area a -> b
-foldlWithIndexArea iba2b = foldMatrixWithIndex 0 inc f
-  where
-  f r = foldlWithIndex (iba2b <<< mkCoordRC r)
+foldlWithIndexArea iba2b = foldMatrixWithIndex 0 inc
+  (\i -> foldlWithIndex (iba2b <<< i))
 
 foldMatrixWithIndex
   :: forall a b
    . Int
   -> (Int -> Int)
-  -> (Int -> b -> Array a -> b)
+  -> ((Int -> Coord) -> b -> Array a -> b)
   -> b
   -> Area a
   -> b
@@ -92,7 +93,7 @@ foldMatrixWithIndex start next f b (Area m) = go start b
   where
   go y b' = case m !! y of
     Nothing -> b'
-    Just a -> go (next y) (f y b' a)
+    Just a -> go (next y) (f (mkCoordRC y) b' a)
 
 -- ┌──────────────────────┐
 -- │ Traversable instance │
