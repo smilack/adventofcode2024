@@ -9,14 +9,15 @@ module AdventOfCode.Util.Area
 import AdventOfCode.Prelude hiding (wrap, unwrap)
 
 import AdventOfCode.Twenty24.Util (dec, inc)
-import AdventOfCode.Util.Coord (Coord(..))
+import AdventOfCode.Util.Coord (Coord(..), mkCoordRC)
 import Data.Array (fromFoldable) as Array
 import Data.Array (length, replicate, (!!))
+import Data.FoldableWithIndex (class FoldableWithIndex, foldMapWithIndexDefaultL, foldlWithIndex, foldrWithIndex)
 import Data.Lens (preview, iso)
 import Data.Lens (set) as Lens
 import Data.Lens.Index (ix)
 import Data.Lens.Types (AffineTraversal', Iso')
-import Data.Traversable (sequenceDefault, traverseDefault)
+import Data.Traversable (sequenceDefault)
 
 -- ┌──────────────────┐
 -- │ Area type        │
@@ -58,6 +59,40 @@ foldMatrix start next f b (Area m) = go start b
   go i b' = case m !! i of
     Nothing -> b'
     Just a -> go (next i) (f b' a)
+
+-- ┌────────────────────────────┐
+-- │ FoldableWithIndex instance │
+-- └────────────────────────────┘
+
+instance FoldableWithIndex Coord Area where
+  foldrWithIndex = foldrWithIndexArea
+  foldlWithIndex = foldlWithIndexArea
+  foldMapWithIndex = foldMapWithIndexDefaultL
+
+foldrWithIndexArea :: forall a b. (Coord -> a -> b -> b) -> b -> Area a -> b
+foldrWithIndexArea iab2b b a@(Area m) =
+  foldMatrixWithIndex (length m - 1) dec f b a
+  where
+  f r = foldrWithIndex (iab2b <<< mkCoordRC r)
+
+foldlWithIndexArea :: forall a b. (Coord -> b -> a -> b) -> b -> Area a -> b
+foldlWithIndexArea iba2b = foldMatrixWithIndex 0 inc f
+  where
+  f r = foldlWithIndex (iba2b <<< mkCoordRC r)
+
+foldMatrixWithIndex
+  :: forall a b
+   . Int
+  -> (Int -> Int)
+  -> (Int -> b -> Array a -> b)
+  -> b
+  -> Area a
+  -> b
+foldMatrixWithIndex start next f b (Area m) = go start b
+  where
+  go y b' = case m !! y of
+    Nothing -> b'
+    Just a -> go (next y) (f y b' a)
 
 -- ┌──────────────────────┐
 -- │ Traversable instance │
