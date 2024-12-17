@@ -65,15 +65,11 @@ foldMatrix start next f b (Area m) = go start b
 
 instance Traversable Area where
   traverse = traverseMatrix
-  sequence = sequenceMatrix
+  sequence = sequenceDefault
 
 traverseMatrix
   :: forall a b m. Applicative m => (a -> m b) -> Area a -> m (Area b)
-traverseMatrix a2mb (Area a) = traverseDefault a2mb $ Area a
-
-sequenceMatrix
-  :: forall a m. Applicative m => Area (m a) -> m (Area a)
-sequenceMatrix (Area ma) = sequenceDefault $ Area ma
+traverseMatrix a2mb (Area a) = Area <$> traverse (traverse a2mb) a
 
 -- ┌──────────────────────────┐
 -- │ Pseudo-newtype functions │
