@@ -23,11 +23,12 @@ module AdventOfCode.Twenty24.Util
   , tally
   , testParser
   , to2dArray
+  , traverseMon
   , unsafeFromRight
   , unsafeParse
   ) where
 
-import Prelude
+import AdventOfCode.Prelude
 
 import Control.Monad.Error.Class (class MonadThrow)
 import Data.Array.NonEmpty (NonEmptyArray, singleton, snoc)
@@ -234,3 +235,24 @@ simpleTest
   -> (a -> t)
   -> m Unit
 simpleTest { input, output } f = f input `shouldEqual` output
+
+-- default implementation of traverse for applicative monoids
+--   haven't tested if the order is correct or reversed
+traverseMon
+  :: forall a b m t
+   . Applicative m
+  => Applicative t
+  => Foldable t
+  => Monoid (t b)
+  => (a -> m b)
+  -> t a
+  -> m (t b)
+traverseMon f t = foldr g (pure mempty) t
+  where
+  g :: a -> m (t b) -> m (t b)
+  g a b = (pure <$> f a) *<>* b
+
+applicappend :: forall a m. Applicative m => Semigroup a => m a -> m a -> m a
+applicappend = lift2 append
+
+infixr 5 applicappend as *<>*

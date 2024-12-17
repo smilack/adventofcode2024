@@ -18,6 +18,8 @@ import Prelude
   , (>=>), (>>=), (>>>), (||)
   ) as Exports
 
+import Control.Apply (lift2) as Exports
+
 import Data.Either (Either, fromRight) as Exports
 
 import Data.Generic.Rep (class Generic) as Exports
