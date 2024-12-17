@@ -2,7 +2,7 @@ module Test.AdventOfCode.Twenty24.Six
   ( main
   ) where
 
-import Test.AdventOfCode.Prelude
+import AdventOfCode.Prelude
 
 import AdventOfCode.Twenty24.Six (toMap)
 import Effect (Effect)

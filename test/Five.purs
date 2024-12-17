@@ -2,7 +2,7 @@ module Test.AdventOfCode.Twenty24.Five
   ( main
   ) where
 
-import Test.AdventOfCode.Prelude
+import AdventOfCode.Prelude
 
 import AdventOfCode.Twenty24.Five (Manual(..), Page, Pages, Rule, combine, fixManual, manual, middle, puzzleInput, rule, solve1, solve2, validManuals)
 import AdventOfCode.Twenty24.Util (multiline, testParser)

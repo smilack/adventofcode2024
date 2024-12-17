@@ -2,7 +2,7 @@ module Test.AdventOfCode.Twenty24.$DAY
   ( main
   ) where
 
-import Test.AdventOfCode.Prelude
+import AdventOfCode.Prelude
 
 -- import AdventOfCode.Twenty24.$DAY ()
 -- import AdventOfCode.Twenty24.Util ()
