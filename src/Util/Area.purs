@@ -8,13 +8,23 @@ module AdventOfCode.Util.Area
 
 import AdventOfCode.Prelude hiding (wrap, unwrap)
 
+import AdventOfCode.Twenty24.Util (dec, inc)
 import AdventOfCode.Util.Coord (Coord(..))
 import Data.Array (fromFoldable) as Array
-import Data.Array (replicate)
+import Data.Array (length, replicate, (!!))
 import Data.Lens (preview, iso)
 import Data.Lens (set) as Lens
 import Data.Lens.Index (ix)
 import Data.Lens.Types (AffineTraversal', Iso')
+import Data.Traversable (sequenceDefault, traverseDefault)
+
+-- ┌──────────────────┐
+-- │ Area type        │
+-- ├──────────────────┤
+-- │ Show instance    │
+-- ├──────────────────┤
+-- │ Functor instance │
+-- └──────────────────┘
 
 type Matrix a = Array (Array a)
 
@@ -23,11 +33,61 @@ newtype Area a = Area (Matrix a)
 instance Show a => Show (Area a) where
   show (Area a) = intercalate "\n" $ foldMap show <$> a
 
+instance Functor Area where
+  map f (Area a) = Area $ map (map f) a
+
+-- ┌───────────────────┐
+-- │ Foldable instance │
+-- └───────────────────┘
+
+instance Foldable Area where
+  foldl = foldlArea
+  foldr = foldrArea
+  foldMap f (Area a) = foldMap (foldMap f) a
+
+foldrArea :: forall a b. (a -> b -> b) -> b -> Area a -> b
+foldrArea abb b a@(Area m) = foldMatrix (length m - 1) dec (foldr abb) b a
+
+foldlArea :: forall a b. (b -> a -> b) -> b -> Area a -> b
+foldlArea bab = foldMatrix 0 inc (foldl bab)
+
+foldMatrix
+  :: forall a b. Int -> (Int -> Int) -> (b -> Array a -> b) -> b -> Area a -> b
+foldMatrix start next f b (Area m) = go start b
+  where
+  go i b' = case m !! i of
+    Nothing -> b'
+    Just a -> go (next i) (f b' a)
+
+-- ┌──────────────────────┐
+-- │ Traversable instance │
+-- └──────────────────────┘
+
+instance Traversable Area where
+  traverse = traverseMatrix
+  sequence = sequenceMatrix
+
+traverseMatrix
+  :: forall a b m. Applicative m => (a -> m b) -> Area a -> m (Area b)
+traverseMatrix a2mb (Area a) = traverseDefault a2mb $ Area a
+
+sequenceMatrix
+  :: forall a m. Applicative m => Area (m a) -> m (Area a)
+sequenceMatrix (Area ma) = sequenceDefault $ Area ma
+
+-- ┌──────────────────────────┐
+-- │ Pseudo-newtype functions │
+-- └──────────────────────────┘
+
 unwrap :: forall a. Area a -> Matrix a
 unwrap (Area a) = a
 
 wrap :: forall a. Matrix a -> Area a
 wrap = Area
+
+-- ┌──────────────┐
+-- │ Constructors │
+-- └──────────────┘
 
 filled :: forall a. { width :: Int, height :: Int, default :: a } -> Area a
 filled { width, height, default } =
@@ -36,6 +96,10 @@ filled { width, height, default } =
 fromFoldable
   :: forall a h w. Functor h => Foldable h => Foldable w => h (w a) -> Area a
 fromFoldable = Area <<< Array.fromFoldable <<< map Array.fromFoldable
+
+-- ┌────────┐
+-- │ Optics │
+-- └────────┘
 
 _area :: forall a. Iso' (Area a) (Matrix a)
 _area = iso unwrap wrap
