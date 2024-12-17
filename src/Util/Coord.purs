@@ -1,6 +1,8 @@
 module AdventOfCode.Util.Coord
   ( Coord(..)
   , Direction(..)
+  , mkCoordRC
+  , mkCoordXY
   , move
   ) where
 
@@ -20,6 +22,12 @@ instance Ord Coord where
 
 instance Show Coord where
   show (Coord { x, y }) = "(" <> show x <> "," <> show y <> ")"
+
+mkCoordXY :: Int -> Int -> Coord
+mkCoordXY = Coord <.. { x: _, y: _ }
+
+mkCoordRC :: Int -> Int -> Coord
+mkCoordRC = Coord <.. { y: _, x: _ }
 
 data Direction = Up | Right | Down | Left
 
