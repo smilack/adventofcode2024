@@ -7,6 +7,7 @@ module AdventOfCode.Twenty24.Six
 import AdventOfCode.Prelude
 
 import AdventOfCode.Twenty24.Util (multiline, oneOfChar)
+import AdventOfCode.Twenty24.Util.SeqRec (seqrec, (<>?))
 import AdventOfCode.Util.Area (Area)
 import AdventOfCode.Util.Area as Area
 import AdventOfCode.Util.Coord (Coord(..), Direction(..))
@@ -39,9 +40,14 @@ main = launchAff_ do
     -- logShow $ solve2 input
     log "End"
     --
+    -- log "\nhi"
+    -- -- log $ show @(ShowKeysOnly State StateList) $ ShowKeysOnly
+    -- --   { pos: false, lab: 0, dir: "a" }
+    --
     log "\nhi"
-    log $ show @(ShowKeysOnly State StateList) $ ShowKeysOnly
-      { pos: false, lab: 0, dir: "a" }
+    logShow $ seqrec { pos: Just false }
+      <>? { lab: Just 0 }
+      <>? { dir: Just "a" }
 
 --
 newtype ShowKeysOnly :: Row Type -> RL.RowList Type -> Type

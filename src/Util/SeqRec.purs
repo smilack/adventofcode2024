@@ -5,11 +5,13 @@ import Data.Symbol (class IsSymbol)
 import Record (get, set, insert)
 import Type.Proxy (Proxy(..))
 import Type.Row (class Lacks, class Cons)
+import Type.RowList (Cons, Nil, class RowToList)
 
 seqrec
   :: forall @l a r0 r1
    . IsSymbol l
   => Cons l (Maybe a) () r0
+  => RowToList r0 (Cons l (Maybe a) Nil)
   => Cons l a () r1
   => Record r0
   -> Maybe (Record r1)
@@ -23,6 +25,7 @@ seqadd
   :: forall @l a r0 r1 r2
    . IsSymbol l
   => Cons l (Maybe a) () r0
+  => RowToList r0 (Cons l (Maybe a) Nil)
   => Lacks l r1
   => Cons l a r1 r2
   => Record r0
@@ -34,6 +37,7 @@ addseq
   :: forall @l a r0 r1 r2
    . IsSymbol l
   => Cons l (Maybe a) () r0
+  => RowToList r0 (Cons l (Maybe a) Nil)
   => Lacks l r1
   => Cons l a r1 r2
   => Maybe (Record r1)
