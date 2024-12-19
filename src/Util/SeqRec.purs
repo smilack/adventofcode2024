@@ -8,47 +8,41 @@ import Type.Row (class Lacks, class Cons)
 import Type.RowList (Cons, Nil, class RowToList)
 
 seqrec
-  :: forall @l a r0 r1
-   . IsSymbol l
-  => Cons l (Maybe a) () r0
-  => RowToList r0 (Cons l (Maybe a) Nil)
-  => Cons l a () r1
+  :: forall k v r0 r1
+   . IsSymbol k
+  => Cons k (Maybe v) () r0
+  => RowToList r0 (Cons k (Maybe v) Nil)
+  => Cons k v () r1
   => Record r0
   -> Maybe (Record r1)
-seqrec r0 = case get l r0 of
-  Nothing -> Nothing
-  Just val -> Just $ set l val r0
+seqrec r0 = (\val -> set key val r0) <$> get key r0
   where
-  l = Proxy @l
+  key = Proxy @k
 
 seqadd
-  :: forall @l a r0 r1 r2
-   . IsSymbol l
-  => Cons l (Maybe a) () r0
-  => RowToList r0 (Cons l (Maybe a) Nil)
-  => Lacks l r1
-  => Cons l a r1 r2
+  :: forall k v r0 r1 r2
+   . IsSymbol k
+  => Cons k (Maybe v) () r0
+  => RowToList r0 (Cons k (Maybe v) Nil)
+  => Lacks k r1
+  => Cons k v r1 r2
   => Record r0
   -> Maybe (Record r1)
   -> Maybe (Record r2)
-seqadd = flip (addseq @l)
+seqadd = flip addseq
 
 addseq
-  :: forall @l a r0 r1 r2
-   . IsSymbol l
-  => Cons l (Maybe a) () r0
-  => RowToList r0 (Cons l (Maybe a) Nil)
-  => Lacks l r1
-  => Cons l a r1 r2
+  :: forall k v r0 r1 r2
+   . IsSymbol k
+  => Cons k (Maybe v) () r0
+  => RowToList r0 (Cons k (Maybe v) Nil)
+  => Lacks k r1
+  => Cons k v r1 r2
   => Maybe (Record r1)
   -> Record r0
   -> Maybe (Record r2)
-addseq mr1 r0 = case mr1 of
-  Nothing -> Nothing
-  Just r1 -> case get l r0 of
-    Nothing -> Nothing
-    Just a -> Just (insert l a r1)
+addseq mr1 r0 = (\r1 val -> insert key val r1) <$> mr1 <*> get key r0
   where
-  l = Proxy @l
+  key = Proxy @k
 
 infixl 5 addseq as <>?
