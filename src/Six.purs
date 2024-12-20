@@ -17,7 +17,7 @@ import AdventOfCode.Util.Area as Area
 import AdventOfCode.Util.Coord (Coord(..), Direction(..), move)
 import Data.Array as Array
 import Data.Bifunctor (lmap)
-import Data.Either (Either(..)) as Either
+import Data.Either (Either(..)) as E
 import Data.FoldableWithIndex (findWithIndex)
 import Data.Monoid.Additive (Additive(..))
 import Data.Newtype (alaF)
@@ -56,31 +56,21 @@ solve1 = unwrap
   <<< toMap
 
 run :: State -> Area LabCell
-run = step >>> case _ of
-  Either.Left area -> area
-  Either.Right state' -> run state'
-
-step :: State -> Either (Area LabCell) State
-step state@{ lab, pos, dir } = case A.get peekCoord lab of
-  Just Obstructed -> Either.Right turned
-  Just Empty -> Either.Right normalMove
-  Just Visited -> Either.Right normalMove
-  _ -> Either.Left end
+run = go <<< E.Right
   where
-  peekCoord :: Coord
-  peekCoord = move dir pos
+  go = case _ of
+    E.Left area -> area
+    E.Right state@{ lab, pos, dir } -> go $
+      case A.get (move dir pos) lab of
+        Just Obstructed -> E.Right $ state { dir = turn dir }
+        Just Empty -> E.Right $ nextMove state
+        Just Visited -> E.Right $ nextMove state
+        _ -> E.Left $ A.set pos Visited lab
 
-  normalMove :: State
-  normalMove = state
-    { lab = A.set pos Visited $ A.set peekCoord (Guard dir) $ lab
-    , pos = peekCoord
+  nextMove state@{ lab, pos, dir } = state
+    { lab = A.set pos Visited $ A.set (move dir pos) (Guard dir) lab
+    , pos = move dir pos
     }
-
-  turned :: State
-  turned = state { dir = turn dir }
-
-  end :: Area LabCell
-  end = A.set pos Visited lab
 
 initialState :: Area LabCell -> Maybe State
 initialState lab = seqrec { lab: Just lab } <>? { pos } <>? { dir }
