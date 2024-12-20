@@ -4,7 +4,7 @@ module Test.AdventOfCode.Twenty24.Six
 
 import AdventOfCode.Prelude
 
-import AdventOfCode.Twenty24.Six (toMap)
+import AdventOfCode.Twenty24.Six (initialState, run, solve1, toMap)
 import Effect (Effect)
 import Effect.Class.Console (logShow)
 import Test.QuickCheck ((===), Result)
@@ -20,11 +20,24 @@ main = do
   runSpecAndExitProcess [ consoleReporter ] do
     describe "Day Six" do
       describe "Part 1" do
-        pending "parse input"
-        pending "other stuff"
+        it "solve 1" do
+          solve1 testInput `shouldEqual` 41
       describe "Part 2" do
         pending "more stuff"
 
 testInput :: String
 testInput =
   "....#.....\n.........#\n..........\n..#.......\n.......#..\n..........\n.#..^.....\n........#.\n#.........\n......#..."
+
+testOut :: String
+testOut =
+  """░░░░█░░░░░
+░░░░     █
+░░░░ ░░░ ░
+░░█░ ░░░ ░
+░░     █ ░
+░░ ░ ░ ░ ░
+░█       ░
+░       █░
+█       ░░
+░░░░░░█ ░░"""

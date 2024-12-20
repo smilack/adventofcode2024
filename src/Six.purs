@@ -1,6 +1,9 @@
 module AdventOfCode.Twenty24.Six
   ( LabCell(..)
+  , initialState
   , main
+  , run
+  , solve1
   , toMap
   ) where
 
@@ -9,10 +12,15 @@ import AdventOfCode.Prelude
 import AdventOfCode.Twenty24.Util (multiline, oneOfChar)
 import AdventOfCode.Twenty24.Util.SeqRec (seqrec, (<>?))
 import AdventOfCode.Util.Area (Area)
+import AdventOfCode.Util.Area (get, set) as A
 import AdventOfCode.Util.Area as Area
-import AdventOfCode.Util.Coord (Coord(..), Direction(..))
+import AdventOfCode.Util.Coord (Coord(..), Direction(..), move)
 import Data.Array as Array
+import Data.Bifunctor (lmap)
+import Data.Either (Either(..)) as Either
 import Data.FoldableWithIndex (findWithIndex)
+import Data.Monoid.Additive (Additive(..))
+import Data.Newtype (alaF)
 import Data.Reflectable (class Reflectable, class Reifiable, reflectType, reifyType)
 import Data.Symbol (class IsSymbol)
 import Debug (spy, traceM)
@@ -23,7 +31,6 @@ import Effect.Console (log, logShow)
 import Node.Encoding (Encoding(..))
 import Node.FS.Aff (readTextFile)
 import Parsing (Parser)
-import Record (get, insert, merge, modify, set, union, delete)
 import Type.Proxy (Proxy(..))
 import Type.Row (type (+), class Lacks, class Cons, class Union)
 import Type.RowList as RL
@@ -35,83 +42,73 @@ main = launchAff_ do
   input <- readTextFile UTF8 "./input/6"
   liftEffect do
     log "Part 1:"
-    -- logShow $ solve1 input
+    logShow $ solve1 input
     log "Part 2:"
     -- logShow $ solve2 input
     log "End"
-    --
-    -- log "\nhi"
-    -- -- log $ show @(ShowKeysOnly State StateList) $ ShowKeysOnly
-    -- --   { pos: false, lab: 0, dir: "a" }
-    --
-    log "\nhi"
-    logShow $ seqrec { pos: Just false }
-      <>? { lab: Just 0 }
-      <>? { dir: Just "a" }
 
---
-newtype ShowKeysOnly :: Row Type -> RL.RowList Type -> Type
-newtype ShowKeysOnly r l = ShowKeysOnly (Record r)
+solve1 :: String -> Int
+solve1 = unwrap
+  <<< fold
+  <<< map (foldMap $ Additive <<< isVisited)
+  <<< map run
+  <<< initialState
+  <<< toMap
 
-class ShowKeysInRowList2 :: Row Type -> RL.RowList Type -> Constraint
-class RL.RowToList r l <= ShowKeysInRowList2 r l | l -> r where
-  buildKeyList2 :: Record r -> List String
+run :: State -> Area LabCell
+run = step >>> case _ of
+  Either.Left area -> area
+  Either.Right state' -> run state'
 
-instance ShowKeysInRowList2 () RL.Nil where
-  buildKeyList2 _ = Nil
-
-instance
-  ( Reflectable sym String
-  , ShowKeysInRowList2 r' rest
-  , IsSymbol sym
-  , Cons sym k r' r
-  , RL.RowToList r (RL.Cons sym k rest)
-  , Lacks sym r'
-  ) =>
-  ShowKeysInRowList2 r (RL.Cons sym k rest)
+step :: State -> Either (Area LabCell) State
+step state@{ lab, pos, dir } = case A.get peekCoord lab of
+  Just Obstructed -> Either.Right turned
+  Just Empty -> Either.Right normalMove
+  Just Visited -> Either.Right normalMove
+  _ -> Either.Left end
   where
-  buildKeyList2 :: Record r -> List String
-  buildKeyList2 rec = (Cons :: String -> List String -> List String) thisKey
-    remainingKeys
-    where
-    thisKey = reflectType (Proxy @sym)
+  peekCoord :: Coord
+  peekCoord = move dir pos
 
-    _ = spy "get thisKey rec" $ get (Proxy @sym) rec
+  normalMove :: State
+  normalMove = state
+    { lab = A.set pos Visited $ A.set peekCoord (Guard dir) $ lab
+    , pos = peekCoord
+    }
 
-    restRec = delete (Proxy @sym) rec
+  turned :: State
+  turned = state { dir = turn dir }
 
-    remainingKeys = buildKeyList2 @r' @rest restRec
+  end :: Area LabCell
+  end = A.set pos Visited lab
 
-instance
-  ( ShowKeysInRowList2 recordRows rowList
-  ) =>
-  Show (ShowKeysOnly recordRows rowList)
+initialState :: Area LabCell -> Maybe State
+initialState lab = seqrec { lab: Just lab } <>? { pos } <>? { dir }
   where
-  show (ShowKeysOnly rec) = show $ buildKeyList2 @recordRows @rowList rec
+  start = findWithIndex isGuard =<< Just lab
+  pos = _.index <$> start
+  dir = directionOf =<< _.value <$> start
 
--- type State =
---   { pos :: Coord
---   , lab :: Area LabCell
---   , dir :: Direction
---   }
+isVisited :: LabCell -> Int
+isVisited = case _ of
+  Visited -> 1
+  _ -> 0
+
+isGuard :: Coord -> LabCell -> Boolean
+isGuard _ = case _ of
+  Guard _ -> true
+  _ -> false
+
+directionOf :: LabCell -> Maybe Direction
+directionOf = case _ of
+  Guard d -> Just d
+  _ -> Nothing
+
 type State =
-  ( dir :: String
-  , lab :: Int
-  , pos :: Boolean
-  )
-
-type StateList =
-  (RL.Cons "dir" String (RL.Cons "lab" Int (RL.Cons "pos" Boolean RL.Nil)))
-
-addrec
-  :: forall l a r1 r2
-   . IsSymbol l
-  => Lacks l r1
-  => Cons l a r1 r2
-  => Tuple (Proxy l) a
-  -> Record r1
-  -> Record r2
-addrec (l /\ a) = insert l a
+  { pos :: Coord
+  , lab :: Area LabCell
+  , dir :: Direction
+  }
 
 turn :: Direction -> Direction
 turn = case _ of
@@ -147,10 +144,10 @@ toMap :: String -> Area LabCell
 toMap = Area.fromFoldable <<< parseLab
 
 parseLab :: String -> List (List LabCell)
-parseLab s = fold $ runParser s lab
+parseLab s = fold $ runParser s labP
 
-lab :: Parser String (List (List LabCell))
-lab = multiline row
+labP :: Parser String (List (List LabCell))
+labP = multiline row
 
 row :: Parser String (List LabCell)
 row = many $ oneOfChar labCellCharacters

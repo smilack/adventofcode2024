@@ -13,57 +13,57 @@ main = do
   --
   log "End"
 
--- ┌──────────────┐
--- │ SeqRec class │
--- └──────────────┘
+-- -- ┌──────────────┐
+-- -- │ SeqRec class │
+-- -- └──────────────┘
 
-newtype ShowKeysOnly :: Row Type -> RL.RowList Type -> Type
-newtype ShowKeysOnly r l = ShowKeysOnly (Record r)
+-- newtype ShowKeysOnly :: Row Type -> RL.RowList Type -> Type
+-- newtype ShowKeysOnly r l = ShowKeysOnly (Record r)
 
-class ShowKeysInRowList2 :: Row Type -> RL.RowList Type -> Constraint
-class RL.RowToList r l <= ShowKeysInRowList2 r l | l -> r where
-  buildKeyList2 :: Record r -> List String
+-- class ShowKeysInRowList2 :: Row Type -> RL.RowList Type -> Constraint
+-- class RL.RowToList r l <= ShowKeysInRowList2 r l | l -> r where
+--   buildKeyList2 :: Record r -> List String
 
-instance ShowKeysInRowList2 () RL.Nil where
-  buildKeyList2 _ = Nil
+-- instance ShowKeysInRowList2 () RL.Nil where
+--   buildKeyList2 _ = Nil
 
-instance
-  ( Reflectable sym String
-  , ShowKeysInRowList2 r' rest
-  , IsSymbol sym
-  , Cons sym k r' r
-  , RL.RowToList r (RL.Cons sym k rest)
-  , Lacks sym r'
-  ) =>
-  ShowKeysInRowList2 r (RL.Cons sym k rest)
-  where
-  buildKeyList2 :: Record r -> List String
-  buildKeyList2 rec = (Cons :: String -> List String -> List String) thisKey
-    remainingKeys
-    where
-    thisKey = reflectType (Proxy @sym)
+-- instance
+--   ( Reflectable sym String
+--   , ShowKeysInRowList2 r' rest
+--   , IsSymbol sym
+--   , Cons sym k r' r
+--   , RL.RowToList r (RL.Cons sym k rest)
+--   , Lacks sym r'
+--   ) =>
+--   ShowKeysInRowList2 r (RL.Cons sym k rest)
+--   where
+--   buildKeyList2 :: Record r -> List String
+--   buildKeyList2 rec = (Cons :: String -> List String -> List String) thisKey
+--     remainingKeys
+--     where
+--     thisKey = reflectType (Proxy @sym)
 
-    _ = spy "get thisKey rec" $ get (Proxy @sym) rec
+--     _ = spy "get thisKey rec" $ get (Proxy @sym) rec
 
-    restRec = delete (Proxy @sym) rec
+--     restRec = delete (Proxy @sym) rec
 
-    remainingKeys = buildKeyList2 @r' @rest restRec
+--     remainingKeys = buildKeyList2 @r' @rest restRec
 
-instance
-  ( ShowKeysInRowList2 recordRows rowList
-  ) =>
-  Show (ShowKeysOnly recordRows rowList)
-  where
-  show (ShowKeysOnly rec) = show $ buildKeyList2 @recordRows @rowList rec
+-- instance
+--   ( ShowKeysInRowList2 recordRows rowList
+--   ) =>
+--   Show (ShowKeysOnly recordRows rowList)
+--   where
+--   show (ShowKeysOnly rec) = show $ buildKeyList2 @recordRows @rowList rec
 
-type State =
-  ( dir :: String
-  , lab :: Int
-  , pos :: Boolean
-  )
+-- type State =
+--   ( dir :: String
+--   , lab :: Int
+--   , pos :: Boolean
+--   )
 
-type StateList =
-  (RL.Cons "dir" String (RL.Cons "lab" Int (RL.Cons "pos" Boolean RL.Nil)))
+-- type StateList =
+--   (RL.Cons "dir" String (RL.Cons "lab" Int (RL.Cons "pos" Boolean RL.Nil)))
 
 -- ┌─────────────────────────────────────────────────────────────────┐
 -- │ seqrec, addseq, <>?                                             │
