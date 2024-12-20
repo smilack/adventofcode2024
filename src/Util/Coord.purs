@@ -1,12 +1,14 @@
 module AdventOfCode.Util.Coord
   ( Coord(..)
   , Direction(..)
+  , dist
   , mkCoordRC
   , mkCoordXY
   , move
   ) where
 
 import AdventOfCode.Prelude hiding (modify)
+
 import AdventOfCode.Twenty24.Util (modify)
 
 newtype Coord = Coord { x :: Int, y :: Int }
@@ -47,3 +49,9 @@ move = over Coord <<< case _ of
   where
   inc = (_ + 1)
   dec = (_ - 1)
+
+dist :: Coord -> Coord -> { x :: Int, y :: Int }
+dist (Coord a) (Coord b) =
+  { x: a.x - b.x
+  , y: a.y - b.y
+  }
