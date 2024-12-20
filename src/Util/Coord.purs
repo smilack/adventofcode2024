@@ -21,7 +21,7 @@ instance Ord Coord where
       order -> order
 
 instance Show Coord where
-  show (Coord { x, y }) = "(" <> show x <> "," <> show y <> ")"
+  show (Coord { x, y }) = "(row " <> show y <> ", column " <> show x <> ")"
 
 mkCoordXY :: Int -> Int -> Coord
 mkCoordXY = Coord <.. { x: _, y: _ }
