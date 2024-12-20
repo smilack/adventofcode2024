@@ -18,12 +18,14 @@ package:
     - profunctor-lenses
     - quickcheck
     - record
+    - sized-vectors
     - spec
     - spec-node
     - spec-quickcheck
     - strings
     - transformers
     - tuples
+    - typelevel
   test:
     main: Test.Main
     dependencies: []
