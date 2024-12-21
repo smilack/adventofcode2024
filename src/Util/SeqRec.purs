@@ -15,7 +15,7 @@ main :: Effect Unit
 main = do
   log "SeqRec testing"
   --
-  logShow x
+  -- logShow x
   --
   log "End"
 
@@ -57,9 +57,47 @@ instance
   ) =>
   MaybesToStuff (Cons l (Maybe a) restm) (Cons l a rest)
 
+-- TODO: If I want to extend this to other Applicatives, then this should have
+--   an Applicative m constraint instead of Maybe. Then the Sequence newtype
+--   would be called SeqRecordMaybe or something, and its instance of SeqRec
+--   would have the maybe constraint. I'd also need different constraints for
+--   RecordOfMaybes/MaybesToStuff. Something like (can I do this?)
+--     - RecordOfMaybes -> recOfAp
+--     - MaybesToStuff -> justRec
+class RecordOfAp :: (Type -> Type) -> RowList Type -> Constraint
+class RecordOfAp applic listAp
+
+instance RecordOfAp Maybe Nil
+instance RecordOfAp Maybe restAp => RecordOfAp Maybe (Cons key (Maybe a) restAp)
+
+class UnApRecord :: (Type -> Type) -> RowList Type -> RowList Type -> Constraint
+class UnApRecord applic listAp listNoAp
+
+instance UnApRecord Maybe Nil Nil
+instance
+  UnApRecord Maybe restAp restNoAp =>
+  UnApRecord Maybe (Cons key (Maybe a) restAp) (Cons key a restNoAp)
+
+class TraversableRecord
+  :: (Type -> Type) -- newtype
+  -> (Type -> Type) -- applic
+  -> Row Type -- rowAp
+  -> Row Type -- rowNoAp
+  -> Constraint
+class TraversableRecord newty applic rowAp rowNoAp where
+  sequence
+    :: forall listAp listNoAp
+     . RowToList rowAp listAp
+    => RowToList rowNoAp listNoAp
+    => RecordOfAp applic listAp
+    => UnApRecord applic listAp listNoAp
+    => newty (Record rowAp)
+    -> applic (Record rowNoAp)
+
 -- class SeqRec: Class that will have the `seqrec` function
 --   (replaces `Show` in the example)
 
+{-
 class SeqRec :: (Type -> Type) -> Row Type -> Row Type -> Constraint
 class SeqRec f rm r where
   sequence
@@ -70,11 +108,23 @@ class SeqRec f rm r where
     => MaybesToStuff lm l
     => f (Record rm)
     -> Maybe (Record r)
+-}
 
 newtype Sequence :: Type -> Type
 newtype Sequence r = Sequence r
 
 -- pretty sure above this is fine
+
+{- 
+instance
+  ( RowToList rowAp listAp
+  , RowToList rowNoAp listNoAp
+  , RecordOfAp Maybe listAp
+  , UnApRecord Maybe listAp listNoAp
+  ) =>
+  TraversableRecord Sequence Maybe rowAp rowNoAp
+  where
+  sequence (Sequence record) = Nothing
 
 instance
   ( RowToList rm lm
@@ -91,11 +141,13 @@ instance
   go :: Record rm -> Maybe (Record r)
   go {} = Just {}
   go rec = Nothing
+-}
+
 -- Can I make this a separate function so I don't have to keep wrapping and unwrapping Sequence?
 -- The Cons constraints might be necessary for annotating the record functions and recursive step
-    -- mV = get k rec
-    -- rec' :: Record = delete k rec
-    -- insert k <$> mV <*> get (sequence @Sequence @rm' @r' $ Sequence $ rec')
+-- mV = get k rec
+-- rec' :: Record = delete k rec
+-- insert k <$> mV <*> get (sequence @Sequence @rm' @r' $ Sequence $ rec')
 
 -- do I need the below?
 
