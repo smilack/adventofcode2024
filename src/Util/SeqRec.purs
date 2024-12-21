@@ -35,6 +35,7 @@ type StateList =
 -- │ SeqRec class │
 -- └──────────────┘
 
+{-
 -- TODO: can add a function `seqrec` or whatever that only accepts a
 --   `RecordOfMaybes` and creates the `Sequence`/runs `sequence` or
 --   `mapFromMaybes` or whatever
@@ -56,14 +57,8 @@ instance
   ( MaybesToStuff restm rest
   ) =>
   MaybesToStuff (Cons l (Maybe a) restm) (Cons l a rest)
+-}
 
--- TODO: If I want to extend this to other Applicatives, then this should have
---   an Applicative m constraint instead of Maybe. Then the Sequence newtype
---   would be called SeqRecordMaybe or something, and its instance of SeqRec
---   would have the maybe constraint. I'd also need different constraints for
---   RecordOfMaybes/MaybesToStuff. Something like (can I do this?)
---     - RecordOfMaybes -> recOfAp
---     - MaybesToStuff -> justRec
 class RecordOfAp :: (Type -> Type) -> RowList Type -> Constraint
 class RecordOfAp applic listAp
 
@@ -109,6 +104,18 @@ class SeqRec f rm r where
     => f (Record rm)
     -> Maybe (Record r)
 -}
+
+-- TODO: Can I make Maybe a ghost type of Sequence so I only need one Sequence
+--   newtype? e.g.
+--
+--     newtype Sequence :: (Type -> Type) -> Type -> Type
+--     newtype Sequence applic recAp = Sequence recAp
+--
+--     instance (...) => TraversableRecord (newty applic) rowAp rowNoAp where
+--       ...
+--
+--   also do I need to make rowNoAp a parameter of TraversableRecord or can
+--     I make it using constraints?
 
 newtype Sequence :: Type -> Type
 newtype Sequence r = Sequence r
