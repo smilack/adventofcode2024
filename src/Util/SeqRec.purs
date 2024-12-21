@@ -1,8 +1,12 @@
 module AdventOfCode.Twenty24.Util.SeqRec where
 
 import AdventOfCode.Prelude
+
+import Data.Reflectable (class Reflectable, reflectType)
 import Data.Symbol (class IsSymbol)
-import Record (get, set, insert)
+import Debug (spy)
+import Prim.RowList (RowList)
+import Record (delete, get, insert, set)
 import Type.Proxy (Proxy(..))
 import Type.Row (class Lacks, class Cons)
 import Type.RowList (Cons, Nil, class RowToList)
@@ -11,60 +15,120 @@ main :: Effect Unit
 main = do
   log "SeqRec testing"
   --
+  logShow x
+  --
   log "End"
 
--- -- ┌──────────────┐
--- -- │ SeqRec class │
--- -- └──────────────┘
+x :: Sequence State
+x = Sequence { dir: "asdf", lab: 3, pos: true }
 
--- newtype ShowKeysOnly :: Row Type -> RL.RowList Type -> Type
--- newtype ShowKeysOnly r l = ShowKeysOnly (Record r)
+type State =
+  { dir :: String
+  , lab :: Int
+  , pos :: Boolean
+  }
 
--- class ShowKeysInRowList2 :: Row Type -> RL.RowList Type -> Constraint
--- class RL.RowToList r l <= ShowKeysInRowList2 r l | l -> r where
---   buildKeyList2 :: Record r -> List String
+type StateList =
+  (Cons "dir" String (Cons "lab" Int (Cons "pos" Boolean Nil)))
 
--- instance ShowKeysInRowList2 () RL.Nil where
---   buildKeyList2 _ = Nil
+-- ┌──────────────┐
+-- │ SeqRec class │
+-- └──────────────┘
 
--- instance
---   ( Reflectable sym String
---   , ShowKeysInRowList2 r' rest
---   , IsSymbol sym
---   , Cons sym k r' r
---   , RL.RowToList r (RL.Cons sym k rest)
---   , Lacks sym r'
---   ) =>
---   ShowKeysInRowList2 r (RL.Cons sym k rest)
---   where
---   buildKeyList2 :: Record r -> List String
---   buildKeyList2 rec = (Cons :: String -> List String -> List String) thisKey
---     remainingKeys
---     where
---     thisKey = reflectType (Proxy @sym)
+-- TODO: can add a function `seqrec` or whatever that only accepts a
+--   `RecordOfMaybes` and creates the `Sequence`/runs `sequence` or
+--   `mapFromMaybes` or whatever
 
---     _ = spy "get thisKey rec" $ get (Proxy @sym) rec
+-- class RecordOfMaybes: Record where every `value :: Maybe a`
+class RecordOfMaybes :: RowList Type -> Constraint
+class RecordOfMaybes list
 
---     restRec = delete (Proxy @sym) rec
+instance RecordOfMaybes Nil
+instance RecordOfMaybes rest => RecordOfMaybes (Cons l (Maybe a) rest)
 
---     remainingKeys = buildKeyList2 @r' @rest restRec
+-- class MaybesToStuff: Check that each `value :: Maybe a` in `listm` has a
+--   corresponding `value :: a` in `list`
+class MaybesToStuff :: RowList Type -> RowList Type -> Constraint
+class MaybesToStuff listm list
 
--- instance
---   ( ShowKeysInRowList2 recordRows rowList
---   ) =>
---   Show (ShowKeysOnly recordRows rowList)
---   where
---   show (ShowKeysOnly rec) = show $ buildKeyList2 @recordRows @rowList rec
+instance MaybesToStuff Nil Nil
+instance
+  ( MaybesToStuff restm rest
+  ) =>
+  MaybesToStuff (Cons l (Maybe a) restm) (Cons l a rest)
 
--- type State =
---   ( dir :: String
---   , lab :: Int
---   , pos :: Boolean
---   )
+-- class SeqRec: Class that will have the `seqrec` function
+--   (replaces `Show` in the example)
 
--- type StateList =
---   (RL.Cons "dir" String (RL.Cons "lab" Int (RL.Cons "pos" Boolean RL.Nil)))
+class SeqRec :: (Type -> Type) -> Row Type -> Row Type -> Constraint
+class SeqRec f rm r where
+  sequence
+    :: forall lm l
+     . RowToList rm lm
+    => RowToList r l
+    => RecordOfMaybes lm
+    => MaybesToStuff lm l
+    => f (Record rm)
+    -> Maybe (Record r)
 
+newtype Sequence :: Type -> Type
+newtype Sequence r = Sequence r
+
+-- pretty sure above this is fine
+
+instance
+  ( RowToList rm lm
+  , RowToList r l
+  , RecordOfMaybes lm
+  , MaybesToStuff lm l
+  , Cons k (Maybe v) rm' rm
+  , Cons k v r' r
+  ) =>
+  SeqRec Sequence rm r where
+  sequence (Sequence record) = go record
+  -- I guess I can't use where here, so it *has* to be separate
+  where
+  go :: Record rm -> Maybe (Record r)
+  go {} = Just {}
+  go rec = Nothing
+-- Can I make this a separate function so I don't have to keep wrapping and unwrapping Sequence?
+-- The Cons constraints might be necessary for annotating the record functions and recursive step
+    -- mV = get k rec
+    -- rec' :: Record = delete k rec
+    -- insert k <$> mV <*> get (sequence @Sequence @rm' @r' $ Sequence $ rec')
+
+-- do I need the below?
+
+{-
+class MapRow :: Row Type -> Row Type -> Constraint
+class MapRow rm r where
+  mapFromMaybe :: Record rm -> Maybe (Record r)
+
+instance MapRow () () where
+  mapFromMaybe _ = {}
+
+instance
+  ( Reflectable sym String
+  , MapRow r' rest
+  , IsSymbol sym
+  , Cons sym k r' r
+  , RowToList r (Cons sym k rest)
+  , Lacks sym r'
+  ) =>
+  MapRow r (Cons sym k rest)
+  where
+  mapFromMaybe :: Record r -> List String
+  mapFromMaybe rec = (Cons :: String -> List String -> List String) thisKey
+    remainingKeys
+    where
+    thisKey = reflectType (Proxy @sym)
+
+    _ = spy "get thisKey rec" $ get (Proxy @sym) rec
+
+    restRec = delete (Proxy @sym) rec
+
+    remainingKeys = mapFromMaybe @r' @rest restRec
+ -}
 -- ┌─────────────────────────────────────────────────────────────────┐
 -- │ seqrec, addseq, <>?                                             │
 -- ├─────────────────────────────────────────────────────────────────┤
