@@ -19,6 +19,7 @@ main = do
   --
   log "End"
 
+{-
 x :: Sequence State
 x = Sequence { dir: "asdf", lab: 3, pos: true }
 
@@ -30,6 +31,7 @@ type State =
 
 type StateList =
   (Cons "dir" String (Cons "lab" Int (Cons "pos" Boolean Nil)))
+-}
 
 -- ┌──────────────┐
 -- │ SeqRec class │
@@ -74,20 +76,31 @@ instance
   UnApRecord Maybe (Cons key (Maybe a) restAp) (Cons key a restNoAp)
 
 class TraversableRecord
-  :: (Type -> Type) -- newtype
+  :: ((Type -> Type) -> Row Type -> Type) -- applic, rowAp, newtype
   -> (Type -> Type) -- applic
   -> Row Type -- rowAp
   -> Row Type -- rowNoAp
   -> Constraint
-class TraversableRecord newty applic rowAp rowNoAp where
+class TraversableRecord newty applic rowAp rowNoAp | rowAp -> rowNoAp where
   sequence
     :: forall listAp listNoAp
      . RowToList rowAp listAp
     => RowToList rowNoAp listNoAp
     => RecordOfAp applic listAp
     => UnApRecord applic listAp listNoAp
-    => newty (Record rowAp)
+    => newty applic rowAp
     -> applic (Record rowNoAp)
+
+instance TraversableRecord TravRec Maybe rowAp _ where
+  sequence
+    :: forall listAp listNoAp rowNoAp
+     . RowToList rowAp listAp
+    => RowToList rowNoAp listNoAp
+    => RecordOfAp Maybe listAp
+    => UnApRecord Maybe listAp listNoAp
+    => TravRec Maybe rowAp
+    -> Maybe (Record rowNoAp)
+  sequence = -- I hope this works!
 
 -- class SeqRec: Class that will have the `seqrec` function
 --   (replaces `Show` in the example)
@@ -119,6 +132,12 @@ class SeqRec f rm r where
 
 newtype Sequence :: Type -> Type
 newtype Sequence r = Sequence r
+
+newtype TravRec :: (Type -> Type) -> Row Type -> Type
+newtype TravRec applic rowAp = TravRec (Record rowAp)
+
+type FooMaybe = { foo :: Maybe Int }
+type MaybeFoo = Maybe { foo :: Int }
 
 -- pretty sure above this is fine
 
