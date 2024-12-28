@@ -13,3 +13,6 @@ generated-docs/
 /input/
 .vscode*
 .spec-results
+deno.lock
+package-lock.json
+package.json
