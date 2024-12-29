@@ -64,9 +64,6 @@ instance
 class RecordOfAp :: (Type -> Type) -> RowList Type -> Constraint
 class RecordOfAp applic listAp
 
--- instance RecordOfAp Maybe Nil
--- instance RecordOfAp Maybe restAp => RecordOfAp Maybe (Cons key (Maybe a) restAp)
-
 instance Applicative f => RecordOfAp f Nil
 instance
   ( Applicative f
@@ -76,11 +73,6 @@ instance
 
 class UnApRecord :: (Type -> Type) -> RowList Type -> RowList Type -> Constraint
 class UnApRecord applic listAp listNoAp
-
--- instance UnApRecord Maybe Nil Nil
--- instance
---   UnApRecord Maybe restAp restNoAp =>
---   UnApRecord Maybe (Cons key (Maybe a) restAp) (Cons key a restNoAp)
 
 instance Applicative f => UnApRecord f Nil Nil
 instance
@@ -109,17 +101,18 @@ instance
 else instance
   ( RowToList rowAp listAp
   , RowToList rowNoAp listNoAp
-  , RecordOfAp Maybe listAp
-  , UnApRecord Maybe listAp listNoAp
+  , Applicative applic
+  , RecordOfAp applic listAp
+  , UnApRecord applic listAp listNoAp
   , IsSymbol key
-  , Cons key (Maybe val) rowAp' rowAp
+  , Cons key (applic val) rowAp' rowAp
   , Cons key val rowNoAp' rowNoAp
   , Lacks key rowAp'
   , Lacks key rowNoAp'
-  , TraversableRecord TravRec Maybe rowAp' rowNoAp'
+  , TraversableRecord TravRec applic rowAp' rowNoAp'
   ) =>
-  TraversableRecord TravRec Maybe rowAp rowNoAp where
-  sequence :: TravRec Maybe rowAp -> Maybe (Record rowNoAp)
+  TraversableRecord TravRec applic rowAp rowNoAp where
+  sequence :: TravRec applic rowAp -> applic (Record rowNoAp)
   sequence (TravRec rec) =
     let
       key = Proxy @key
