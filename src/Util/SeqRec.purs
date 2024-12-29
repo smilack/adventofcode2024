@@ -2,6 +2,7 @@ module AdventOfCode.Twenty24.Util.SeqRec
   ( (<>?)
   , addseq
   , class RecordOfAp
+  , main
   , seqrec
   ) where
 
@@ -14,17 +15,21 @@ import Record (delete, get, insert, set)
 import Type.Equality (class TypeEquals)
 import Type.Proxy (Proxy(..))
 import Type.Row (class Lacks, class Cons)
-import Type.RowList (class RowToList, class ListToRow, Cons, Nil)
+import Type.RowList (class RowListSet, class RowToList, class ListToRow, Cons, Nil)
 
 main :: Effect Unit
 main = do
   log "SeqRec testing"
-  traceM $ sequenceRecord @TravRec @Maybe @FooMaybe @Foo $ TravRec
-    { foo: Just 2 }
+  traceM $ test { foo: Just 2, bar: Just 8 }
+  traceM $ test { foo: Just 2, bar: Nothing }
+  traceM $ test { foo: Nothing, bar: Just 8 }
   log "End"
 
-type FooMaybe = (foo :: Maybe Int)
-type Foo = (foo :: Int)
+test :: Record FooMaybe -> Maybe (Record Foo)
+test = sequenceRecord @TravRec @Maybe @FooMaybe @Foo <<< TravRec
+
+type FooMaybe = (foo :: Maybe Int, bar :: Maybe Int)
+type Foo = (foo :: Int, bar :: Int)
 
 -- ┌─────────────────────────────────────────┐
 -- │ TravRec newtype                         │
@@ -49,19 +54,24 @@ newtype TravRec applic rowAp = TravRec (Record rowAp)
 -- │   types unwrapped from @applic.                                           │
 -- └───────────────────────────────────────────────────────────────────────────┘
 
-class RecordOfAp :: (Type -> Type) -> Row Type -> RowList Type -> Constraint
-class RecordOfAp applic rowAp listAp | listAp -> rowAp
-
-instance (Applicative f) => RecordOfAp f () Nil
+class RecordOfAp :: (Type -> Type) -> Type -> Constraint
+class RecordOfAp applic rec
 
 instance
   ( Applicative f
-  , Cons key (f a) rowAp' rowAp
-  , RowToList rowAp (Cons key (f a) listAp')
-  , RecordOfAp f rowAp' listAp'
   , IsSymbol key
+  , RowToList row (Cons key (f a) Nil)
   ) =>
-  RecordOfAp f rowAp (Cons key (f a) listAp')
+  RecordOfAp f { | row }
+
+else instance
+  ( Applicative f
+  , IsSymbol key
+  , RowToList row (Cons key (f a) list)
+  , RowToList row' list
+  , RecordOfAp f { | row' }
+  ) =>
+  RecordOfAp f { | row }
 
 class UnApRecord :: (Type -> Type) -> RowList Type -> RowList Type -> Constraint
 class UnApRecord applic listAp listNoAp
@@ -88,26 +98,20 @@ class TraversableRecord newty applic rowAp rowNoAp where
 
 instance
   ( RowToList rowAp Nil
-  -- , RowToList rowNoAp Nil
-  -- , TypeEquals rowAp rowNoAp
   , Applicative applic
   ) =>
   TraversableRecord TravRec applic rowAp rowAp where
-  -- TraversableRecord TravRec applic rowAp rowNoAp where
   sequenceRecord :: TravRec applic rowAp -> applic (Record rowAp)
-  -- sequenceRecord :: TravRec applic rowAp -> applic (Record rowNoAp)
   sequenceRecord (TravRec rec) = pure rec
 
 else instance
-  ( TypeEquals listAp (Cons key (applic val) listAp')
-  , TypeEquals listNoAp (Cons key val listNoAp')
-  , RowToList rowAp listAp
+  ( RowToList rowAp (Cons key (applic val) listAp')
   , RowToList rowAp' listAp'
-  , RowToList rowNoAp listNoAp
+  , RowToList rowNoAp (Cons key val listNoAp')
   , RowToList rowNoAp' listNoAp'
   , Applicative applic
-  , RecordOfAp applic rowAp listAp
-  , UnApRecord applic listAp listNoAp
+  -- , RecordOfAp applic { | rowAp }
+  -- , UnApRecord applic listAp listNoAp
   , IsSymbol key
   , Cons key (applic val) rowAp' rowAp
   , Cons key val rowNoAp' rowNoAp

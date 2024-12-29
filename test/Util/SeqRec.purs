@@ -3,7 +3,7 @@ module Test.AdventOfCode.Twenty24.Util.SeqRec
   ) where
 
 import AdventOfCode.Prelude hiding (sequence)
-import AdventOfCode.Twenty24.Util.SeqRec (class RecordOfAp)
+import AdventOfCode.Twenty24.Util.SeqRec (class RecordOfAp, class RecordOfAp)
 
 import Effect (Effect)
 import Test.QuickCheck ((===), Result)
@@ -18,11 +18,12 @@ main :: Effect Unit
 main = runSpecAndExitProcess [ consoleReporter ] do
   describe "TraversableRecord" do
     describe "RecordOfAp" do
-      it "Empty record" do
-        recOfAp @Maybe @Nil {} `shouldEqual` (AnyShow {})
       it "One field" do
-        recOfAp @Maybe @FooMaybe { foo: Just 1 }
+        recOfAp { foo: Just 1 }
           `shouldEqual` (AnyShow { foo: Just 1 })
+      -- it "Two fields" do
+      -- recOfAp { foo: Just 1, bar: Just 5 }
+      --   `shouldEqual` (AnyShow { foo: Just 1, bar: Just 5 })
       pending "other stuff"
 
 type FooMaybe = (foo :: Maybe Int)
@@ -32,8 +33,9 @@ type Foo = (foo :: Int)
 --   of RecordOfAp. There are tests for it, but if it compiles
 --   it's kind of already succeeded.
 recOfAp
-  :: forall @f r @l
-   . RecordOfAp f r l
-  => Record r
-  -> AnyShow (Record r)
+  :: forall @f r
+   . Applicative f
+  => RecordOfAp f r
+  => r
+  -> AnyShow r
 recOfAp = AnyShow
