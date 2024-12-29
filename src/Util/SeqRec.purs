@@ -2,9 +2,9 @@ module AdventOfCode.Twenty24.Util.SeqRec where
 
 import AdventOfCode.Prelude
 
-import Data.Reflectable (class Reflectable, reflectType)
+-- import Data.Reflectable (class Reflectable, reflectType)
 import Data.Symbol (class IsSymbol)
-import Debug (spy)
+-- import Debug (spy)
 import Prim.RowList (RowList)
 import Record (delete, get, insert, set)
 import Type.Proxy (Proxy(..))
@@ -92,29 +92,32 @@ instance
 class TraversableRecord
   :: ((Type -> Type) -> Row Type -> Type) -- applic, rowAp, newtype
   -> (Type -> Type) -- applic
+  -> Row Type -- rowAp
+  -> Row Type -- rowNoAp
   -> Constraint
-class
-  TraversableRecord newty applic where
-  sequence
-    :: forall rowAp rowNoAp listAp listNoAp
-     . RowToList rowAp listAp
-    => RowToList rowNoAp listNoAp
-    => RecordOfAp applic listAp
-    => UnApRecord applic listAp listNoAp
-    => newty applic rowAp
-    -> applic (Record rowNoAp)
+class TraversableRecord newty applic rowAp rowNoAp where
+  sequence :: newty applic rowAp -> applic (Record rowNoAp)
 
-instance TraversableRecord TravRec Maybe where
-  sequence
-    :: forall rowAp rowNoAp listAp listNoAp
-     . RowToList rowAp listAp
-    => RowToList rowNoAp listNoAp
-    => RecordOfAp Maybe listAp
-    => UnApRecord Maybe listAp listNoAp
-    => TravRec Maybe rowAp
-    -> Maybe (Record rowNoAp)
-  sequence (TravRec {}) = pure {}
-  sequence (TravRec rec) = Nothing
+instance
+  ( RowToList rowAp Nil
+  , RowToList rowNoAp Nil
+  ) =>
+  TraversableRecord TravRec Maybe rowAp rowNoAp where
+  sequence :: TravRec Maybe rowAp -> Maybe (Record rowNoAp)
+  sequence _ = Nothing
+
+else instance
+  ( RowToList rowAp listAp
+  , RowToList rowNoAp listNoAp
+  , RecordOfAp Maybe listAp
+  , UnApRecord Maybe listAp listNoAp
+  , Cons key (Maybe val) rowAp' rowAp
+  , Cons key val rowNoAp' rowNoAp
+  ) =>
+  TraversableRecord TravRec Maybe rowAp rowNoAp where
+  sequence :: TravRec Maybe rowAp -> Maybe (Record rowNoAp)
+  sequence (TravRec rec) = case rec of
+    _ -> Nothing
 
 -- class SeqRec: Class that will have the `seqrec` function
 --   (replaces `Show` in the example)
