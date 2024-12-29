@@ -103,8 +103,12 @@ instance
   sequence (TravRec rec) = pure rec
 
 else instance
-  ( RowToList rowAp listAp
+  ( TypeEquals listAp (Cons key (applic val) listAp')
+  , TypeEquals listNoAp (Cons key val listNoAp')
+  , RowToList rowAp listAp
+  , RowToList rowAp' listAp'
   , RowToList rowNoAp listNoAp
+  , RowToList rowNoAp' listNoAp'
   , Applicative applic
   , RecordOfAp applic listAp
   , UnApRecord applic listAp listNoAp
