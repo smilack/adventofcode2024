@@ -100,11 +100,11 @@ class TraversableRecord newty applic rowAp rowNoAp where
 
 instance
   ( RowToList rowAp Nil
-  , RowToList rowNoAp Nil
+  , Applicative applic
   ) =>
-  TraversableRecord TravRec Maybe rowAp rowNoAp where
-  sequence :: TravRec Maybe rowAp -> Maybe (Record rowNoAp)
-  sequence _ = Nothing
+  TraversableRecord TravRec applic rowAp rowAp where
+  sequence :: TravRec applic rowAp -> applic (Record rowAp)
+  sequence (TravRec rec) = pure rec
 
 else instance
   ( RowToList rowAp listAp
