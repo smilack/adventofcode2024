@@ -15,13 +15,34 @@ main :: Effect Unit
 main = do
   log "SeqRec testing"
 
-  traceM $ sequence @TravRec @Maybe @FooMaybe @Foo $ TravRec { foo: Just 2 }
+  traceM $ sequenceRecord @TravRec @Maybe @FooMaybe @Foo $ TravRec
+    { foo: Just 2 }
 
   log "End"
 
--- ┌──────────────┐
--- │ SeqRec class │
--- └──────────────┘
+type FooMaybe = (foo :: Maybe Int)
+type Foo = (foo :: Int)
+
+-- ┌─────────────────────────────────────────┐
+-- │ TravRec newtype                         │
+-- ├─────────────────────────────────────────┤
+-- │ Has instance of TraversableRecord class │
+-- └─────────────────────────────────────────┘
+
+newtype TravRec :: (Type -> Type) -> Row Type -> Type
+newtype TravRec applic rowAp = TravRec (Record rowAp)
+
+-- ┌───────────────────────────────────────────────────────────────────────────┐
+-- │ Helper classes/instances (RecordOfAp, UnApRecord)                         │
+-- ├───────────────────────────────────────────────────────────────────────────┤
+-- │ RecordOfAp                                                                │
+-- │   Record where every value type is in an Applicative @applic.             │
+-- │                                                                           │
+-- │ UnApRecord                                                                │
+-- │   For RowLists @listAp and @listNoApp, if @applic @listAp has an instance │
+-- │   of RecordOfAp, then @listNoAp is equivalent to @listAp with all value   │
+-- │   types unwrapped from @applic.                                           │
+-- └───────────────────────────────────────────────────────────────────────────┘
 
 class RecordOfAp :: (Type -> Type) -> RowList Type -> Constraint
 class RecordOfAp applic listAp
@@ -43,6 +64,10 @@ instance
   ) =>
   UnApRecord f (Cons key (f a) restAp) (Cons key a restNoAp)
 
+-- ┌───────────────────────────────────────────────────┐
+-- │ TraversableRecord class and instances for TravRec │
+-- └───────────────────────────────────────────────────┘
+
 class TraversableRecord
   :: ((Type -> Type) -> Row Type -> Type) -- applic, rowAp, newtype
   -> (Type -> Type) -- applic
@@ -50,7 +75,7 @@ class TraversableRecord
   -> Row Type -- rowNoAp
   -> Constraint
 class TraversableRecord newty applic rowAp rowNoAp where
-  sequence :: newty applic rowAp -> applic (Record rowNoAp)
+  sequenceRecord :: newty applic rowAp -> applic (Record rowNoAp)
 
 instance
   ( RowToList rowAp Nil
@@ -60,9 +85,9 @@ instance
   ) =>
   TraversableRecord TravRec applic rowAp rowAp where
   -- TraversableRecord TravRec applic rowAp rowNoAp where
-  sequence :: TravRec applic rowAp -> applic (Record rowAp)
-  -- sequence :: TravRec applic rowAp -> applic (Record rowNoAp)
-  sequence (TravRec rec) = pure rec
+  sequenceRecord :: TravRec applic rowAp -> applic (Record rowAp)
+  -- sequenceRecord :: TravRec applic rowAp -> applic (Record rowNoAp)
+  sequenceRecord (TravRec rec) = pure rec
 
 else instance
   ( TypeEquals listAp (Cons key (applic val) listAp')
@@ -82,24 +107,18 @@ else instance
   , TraversableRecord TravRec applic rowAp' rowNoAp'
   ) =>
   TraversableRecord TravRec applic rowAp rowNoAp where
-  sequence :: TravRec applic rowAp -> applic (Record rowNoAp)
-  sequence (TravRec rec) =
+  sequenceRecord :: TravRec applic rowAp -> applic (Record rowNoAp)
+  sequenceRecord (TravRec rec) =
     let
       key = Proxy @key :: Proxy key
       val = get key rec :: applic val
       rec' = delete key rec :: Record rowAp'
       trec' = TravRec rec' :: TravRec applic rowAp'
-      seqRec' = sequence trec' :: applic (Record rowNoAp')
+      seqRec' = sequenceRecord trec' :: applic (Record rowNoAp')
       ins = insert key <$> val :: applic (Record rowNoAp' -> Record rowNoAp)
       result = ins <*> seqRec' :: applic (Record rowNoAp)
     in
       result
-
-newtype TravRec :: (Type -> Type) -> Row Type -> Type
-newtype TravRec applic rowAp = TravRec (Record rowAp)
-
-type FooMaybe = (foo :: Maybe Int)
-type Foo = (foo :: Int)
 
 -- ┌─────────────────────────────────────────────────────────────────┐
 -- │ seqrec, addseq, <>?                                             │
