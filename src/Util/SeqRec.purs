@@ -64,26 +64,39 @@ instance
 class RecordOfAp :: (Type -> Type) -> RowList Type -> Constraint
 class RecordOfAp applic listAp
 
-instance RecordOfAp Maybe Nil
-instance RecordOfAp Maybe restAp => RecordOfAp Maybe (Cons key (Maybe a) restAp)
+-- instance RecordOfAp Maybe Nil
+-- instance RecordOfAp Maybe restAp => RecordOfAp Maybe (Cons key (Maybe a) restAp)
+
+instance Applicative f => RecordOfAp f Nil
+instance
+  ( Applicative f
+  , RecordOfAp f restAp
+  ) =>
+  RecordOfAp f (Cons key (f a) restAp)
 
 class UnApRecord :: (Type -> Type) -> RowList Type -> RowList Type -> Constraint
 class UnApRecord applic listAp listNoAp
 
-instance UnApRecord Maybe Nil Nil
+-- instance UnApRecord Maybe Nil Nil
+-- instance
+--   UnApRecord Maybe restAp restNoAp =>
+--   UnApRecord Maybe (Cons key (Maybe a) restAp) (Cons key a restNoAp)
+
+instance Applicative f => UnApRecord f Nil Nil
 instance
-  UnApRecord Maybe restAp restNoAp =>
-  UnApRecord Maybe (Cons key (Maybe a) restAp) (Cons key a restNoAp)
+  ( Applicative f
+  , UnApRecord f restAp restNoAp
+  ) =>
+  UnApRecord f (Cons key (f a) restAp) (Cons key a restNoAp)
 
 class TraversableRecord
   :: ((Type -> Type) -> Row Type -> Type) -- applic, rowAp, newtype
   -> (Type -> Type) -- applic
-  -> Row Type -- rowAp
-  -> Row Type -- rowNoAp
   -> Constraint
-class TraversableRecord newty applic rowAp rowNoAp | rowAp -> rowNoAp where
+class
+  TraversableRecord newty applic where
   sequence
-    :: forall listAp listNoAp
+    :: forall rowAp rowNoAp listAp listNoAp
      . RowToList rowAp listAp
     => RowToList rowNoAp listNoAp
     => RecordOfAp applic listAp
@@ -91,16 +104,17 @@ class TraversableRecord newty applic rowAp rowNoAp | rowAp -> rowNoAp where
     => newty applic rowAp
     -> applic (Record rowNoAp)
 
-instance TraversableRecord TravRec Maybe rowAp _ where
+instance TraversableRecord TravRec Maybe where
   sequence
-    :: forall listAp listNoAp rowNoAp
+    :: forall rowAp rowNoAp listAp listNoAp
      . RowToList rowAp listAp
     => RowToList rowNoAp listNoAp
     => RecordOfAp Maybe listAp
     => UnApRecord Maybe listAp listNoAp
     => TravRec Maybe rowAp
     -> Maybe (Record rowNoAp)
-  sequence = -- I hope this works!
+  sequence (TravRec {}) = pure {}
+  sequence (TravRec rec) = Nothing
 
 -- class SeqRec: Class that will have the `seqrec` function
 --   (replaces `Show` in the example)
