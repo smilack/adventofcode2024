@@ -18,10 +18,19 @@ main :: Effect Unit
 main = runSpecAndExitProcess [ consoleReporter ] do
   describe "TraversableRecord" do
     describe "RecordOfAp" do
-      it "EmptyRecord" do
+      it "Empty record" do
         recOfAp @Maybe @Nil {} `shouldEqual` (AnyShow {})
+      it "One field" do
+        recOfAp @Maybe @FooMaybe { foo: Just 1 }
+          `shouldEqual` (AnyShow { foo: Just 1 })
       pending "other stuff"
 
+type FooMaybe = (foo :: Maybe Int)
+type Foo = (foo :: Int)
+
+-- This function basically exists to check the constraints
+--   of RecordOfAp. There are tests for it, but if it compiles
+--   it's kind of already succeeded.
 recOfAp
   :: forall @f r @l
    . RecordOfAp f r l
