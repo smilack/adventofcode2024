@@ -1,22 +1,22 @@
 module AdventOfCode.Twenty24.Util.SeqRec where
 
-import AdventOfCode.Prelude
+import AdventOfCode.Prelude hiding (sequence)
 
--- import Data.Reflectable (class Reflectable, reflectType)
 import Data.Symbol (class IsSymbol)
--- import Debug (spy)
+import Debug (spy, traceM)
 import Prim.RowList (RowList)
 import Record (delete, get, insert, set)
+import Type.Equality (class TypeEquals)
 import Type.Proxy (Proxy(..))
 import Type.Row (class Lacks, class Cons)
-import Type.RowList (class RowToList, Cons, Nil)
+import Type.RowList (class RowToList, class ListToRow, Cons, Nil)
 
 main :: Effect Unit
 main = do
   log "SeqRec testing"
-  --
-  -- logShow x
-  --
+
+  traceM $ sequence @TravRec @Maybe @FooMaybe @Foo $ TravRec { foo: Just 2 }
+
   log "End"
 
 {-
@@ -92,10 +92,14 @@ class TraversableRecord newty applic rowAp rowNoAp where
 
 instance
   ( RowToList rowAp Nil
+  -- , RowToList rowNoAp Nil
+  -- , TypeEquals rowAp rowNoAp
   , Applicative applic
   ) =>
   TraversableRecord TravRec applic rowAp rowAp where
+  -- TraversableRecord TravRec applic rowAp rowNoAp where
   sequence :: TravRec applic rowAp -> applic (Record rowAp)
+  -- sequence :: TravRec applic rowAp -> applic (Record rowNoAp)
   sequence (TravRec rec) = pure rec
 
 else instance
@@ -115,11 +119,15 @@ else instance
   sequence :: TravRec applic rowAp -> applic (Record rowNoAp)
   sequence (TravRec rec) =
     let
-      key = Proxy @key
-      val = get key rec
-      rec' = delete key rec
+      key = Proxy @key :: Proxy key
+      val = get key rec :: applic val
+      rec' = delete key rec :: Record rowAp'
+      trec' = TravRec rec' :: TravRec applic rowAp'
+      seqRec' = sequence trec' :: applic (Record rowNoAp')
+      ins = insert key <$> val :: applic (Record rowNoAp' -> Record rowNoAp)
+      result = ins <*> seqRec' :: applic (Record rowNoAp)
     in
-      insert key <$> val <*> sequence (TravRec rec')
+      result
 
 -- class SeqRec: Class that will have the `seqrec` function
 --   (replaces `Show` in the example)
@@ -149,14 +157,14 @@ class SeqRec f rm r where
 --   also do I need to make rowNoAp a parameter of TraversableRecord or can
 --     I make it using constraints?
 
-newtype Sequence :: Type -> Type
-newtype Sequence r = Sequence r
+-- newtype Sequence :: Type -> Type
+-- newtype Sequence r = Sequence r
 
 newtype TravRec :: (Type -> Type) -> Row Type -> Type
 newtype TravRec applic rowAp = TravRec (Record rowAp)
 
-type FooMaybe = { foo :: Maybe Int }
-type MaybeFoo = Maybe { foo :: Int }
+type FooMaybe = (foo :: Maybe Int)
+type Foo = (foo :: Int)
 
 -- pretty sure above this is fine
 
