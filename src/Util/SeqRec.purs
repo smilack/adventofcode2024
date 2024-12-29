@@ -1,4 +1,9 @@
-module AdventOfCode.Twenty24.Util.SeqRec (seqrec, addseq, (<>?)) where
+module AdventOfCode.Twenty24.Util.SeqRec
+  ( (<>?)
+  , addseq
+  , class RecordOfAp
+  , seqrec
+  ) where
 
 import AdventOfCode.Prelude hiding (sequence)
 
@@ -14,10 +19,8 @@ import Type.RowList (class RowToList, class ListToRow, Cons, Nil)
 main :: Effect Unit
 main = do
   log "SeqRec testing"
-
   traceM $ sequenceRecord @TravRec @Maybe @FooMaybe @Foo $ TravRec
     { foo: Just 2 }
-
   log "End"
 
 type FooMaybe = (foo :: Maybe Int)
@@ -28,6 +31,8 @@ type Foo = (foo :: Int)
 -- ├─────────────────────────────────────────┤
 -- │ Has instance of TraversableRecord class │
 -- └─────────────────────────────────────────┘
+
+-- and its convenient `sequence` method?
 
 newtype TravRec :: (Type -> Type) -> Row Type -> Type
 newtype TravRec applic rowAp = TravRec (Record rowAp)
@@ -44,15 +49,19 @@ newtype TravRec applic rowAp = TravRec (Record rowAp)
 -- │   types unwrapped from @applic.                                           │
 -- └───────────────────────────────────────────────────────────────────────────┘
 
-class RecordOfAp :: (Type -> Type) -> RowList Type -> Constraint
-class RecordOfAp applic listAp
+class RecordOfAp :: (Type -> Type) -> Row Type -> RowList Type -> Constraint
+class RecordOfAp applic rowAp listAp | listAp -> rowAp
 
-instance Applicative f => RecordOfAp f Nil
+instance (Applicative f) => RecordOfAp f () Nil
+
 instance
   ( Applicative f
-  , RecordOfAp f restAp
+  , Cons key (f a) rowAp' rowAp
+  , RowToList rowAp (Cons key (f a) listAp')
+  , RecordOfAp f rowAp' listAp'
+  , IsSymbol key
   ) =>
-  RecordOfAp f (Cons key (f a) restAp)
+  RecordOfAp f rowAp (Cons key (f a) listAp')
 
 class UnApRecord :: (Type -> Type) -> RowList Type -> RowList Type -> Constraint
 class UnApRecord applic listAp listNoAp
@@ -97,7 +106,7 @@ else instance
   , RowToList rowNoAp listNoAp
   , RowToList rowNoAp' listNoAp'
   , Applicative applic
-  , RecordOfAp applic listAp
+  , RecordOfAp applic rowAp listAp
   , UnApRecord applic listAp listNoAp
   , IsSymbol key
   , Cons key (applic val) rowAp' rowAp
