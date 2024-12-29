@@ -9,7 +9,7 @@ import Prim.RowList (RowList)
 import Record (delete, get, insert, set)
 import Type.Proxy (Proxy(..))
 import Type.Row (class Lacks, class Cons)
-import Type.RowList (Cons, Nil, class RowToList)
+import Type.RowList (class RowListRemove, class RowToList, Cons, Nil)
 
 main :: Effect Unit
 main = do
@@ -108,16 +108,30 @@ instance
 
 else instance
   ( RowToList rowAp listAp
+  , RowToList rowAp' listAp'
   , RowToList rowNoAp listNoAp
+  , RowToList rowNoAp' listNoAp'
   , RecordOfAp Maybe listAp
+  , RecordOfAp Maybe listAp'
   , UnApRecord Maybe listAp listNoAp
+  , UnApRecord Maybe listAp' listNoAp'
   , Cons key (Maybe val) rowAp' rowAp
   , Cons key val rowNoAp' rowNoAp
+  , RowListRemove key listAp listAp'
+  , RowListRemove key listNoAp listNoAp'
+  , Lacks key rowAp
+  , Lacks key rowAp'
+  , TraversableRecord TravRec Maybe rowAp' rowNoAp'
   ) =>
   TraversableRecord TravRec Maybe rowAp rowNoAp where
   sequence :: TravRec Maybe rowAp -> Maybe (Record rowNoAp)
-  sequence (TravRec rec) = case rec of
-    _ -> Nothing
+  sequence (TravRec rec) = Nothing
+
+-- let
+
+--   rec' = {} :: Record ()
+-- in
+--   sequence (TravRec rec')
 
 -- class SeqRec: Class that will have the `seqrec` function
 --   (replaces `Show` in the example)
