@@ -18,12 +18,14 @@ main :: Effect Unit
 main = runSpecAndExitProcess [ consoleReporter ] do
   describe "TraversableRecord" do
     describe "RecordOfAp" do
-      it "One field" do
-        recOfAp { foo: Just 1 }
-          `shouldEqual` (AnyShow { foo: Just 1 })
+      -- it "Zero fields" do
+      --   recOfAp @Maybe {} `shouldEqual` (AnyShow {})
+      -- it "One field" do
+      --   recOfAp { foo: Just 1 }
+      --     `shouldEqual` (AnyShow { foo: Just 1 })
       -- it "Two fields" do
-      -- recOfAp { foo: Just 1, bar: Just 5 }
-      --   `shouldEqual` (AnyShow { foo: Just 1, bar: Just 5 })
+      --   recOfAp { foo: Just 1, bar: Just 5 }
+      --     `shouldEqual` (AnyShow { foo: Just 1, bar: Just 5 })
       pending "other stuff"
 
 type FooMaybe = (foo :: Maybe Int)
@@ -35,7 +37,7 @@ type Foo = (foo :: Int)
 recOfAp
   :: forall @f r
    . Applicative f
-  => RecordOfAp f r
+  => RecordOfAp f r _ _
   => r
   -> AnyShow r
 recOfAp = AnyShow

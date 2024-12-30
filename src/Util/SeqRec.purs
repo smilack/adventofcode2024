@@ -2,8 +2,11 @@ module AdventOfCode.Twenty24.Util.SeqRec
   ( (<>?)
   , addseq
   , class RecordOfAp
+  , class RecordToList
+  , class RecordToRow
   , main
   , seqrec
+  , toRow
   ) where
 
 import AdventOfCode.Prelude hiding (sequence)
@@ -54,24 +57,50 @@ newtype TravRec applic rowAp = TravRec (Record rowAp)
 -- │   types unwrapped from @applic.                                           │
 -- └───────────────────────────────────────────────────────────────────────────┘
 
-class RecordOfAp :: (Type -> Type) -> Type -> Constraint
-class RecordOfAp applic rec
+class RecordToRow :: Type -> Row Type -> Constraint
+class RecordToRow rec row | rec -> row where
+  toRow :: rec -> { | row }
+
+instance RecordToRow { | row } row where
+  toRow = identity
+
+class RecordToList :: Type -> Row Type -> RowList Type -> Constraint
+class
+  ( RecordToRow rec row
+  , RowToList row list
+  ) <=
+  RecordToList rec row list
+  | rec -> row list
+  , row -> rec list
+  , list -> rec row
+
+instance (RowToList row list) => RecordToList { | row } row list
+
+class RecordOfAp
+  :: (Type -> Type) -> Type -> Row Type -> RowList Type -> Constraint
+class
+  RecordToList rec row list <=
+  RecordOfAp applic rec row list
+  | rec -> row list
+  , row -> rec list
+  , list -> rec row
 
 instance
   ( Applicative f
   , IsSymbol key
+  , RecordToList rec row list
   , RowToList row (Cons key (f a) Nil)
   ) =>
-  RecordOfAp f { | row }
+  RecordOfAp f rec row list
 
 else instance
   ( Applicative f
   , IsSymbol key
-  , RowToList row (Cons key (f a) list)
-  , RowToList row' list
-  , RecordOfAp f { | row' }
+  , RecordToList rec row list
+  , RowToList row (Cons key (f a) list')
+  , RecordOfAp f { | row' } row' list'
   ) =>
-  RecordOfAp f { | row }
+  RecordOfAp f rec row list
 
 class UnApRecord :: (Type -> Type) -> RowList Type -> RowList Type -> Constraint
 class UnApRecord applic listAp listNoAp
