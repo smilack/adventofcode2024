@@ -29,6 +29,9 @@ main = do
   traceM $ test { foo: Nothing, bar: Just 8 }
   traceM $ test' @Maybe @FooMaybe @Foo $ RecAp { foo: Just 2, bar: Just 8 }
   traceM $ test'' @Foo { foo: Just 2, bar: Just 8 }
+  traceM $ test'' @Foo { foo: Nothing, bar: Just 8 }
+  traceM $ test'' @Foo { foo: Just 2, bar: Nothing }
+  traceM $ test'' @Foo { foo: Nothing, bar: Nothing }
   log "End"
 
 test :: Record FooMaybe -> Maybe (Record Foo)
