@@ -24,12 +24,40 @@ main :: Effect Unit
 main = do
   log "SeqRec testing"
   traceM $ test { foo: Just 2, bar: Just 8 }
+  -- traceM $ sequenceRecord $ TravRec { foo: Just 2, bar: Just 8 }
   traceM $ test { foo: Just 2, bar: Nothing }
   traceM $ test { foo: Nothing, bar: Just 8 }
+  traceM $ test' @Maybe @FooMaybe @Foo $ RecAp { foo: Just 2, bar: Just 8 }
+  traceM $ test'' @Foo { foo: Just 2, bar: Just 8 }
   log "End"
 
 test :: Record FooMaybe -> Maybe (Record Foo)
 test = sequenceRecord @TravRec @Maybe @FooMaybe @Foo <<< TravRec
+
+test'
+  :: forall @f @r @r' l
+   . TraversableRecord TravRec f r r'
+  => ListToRow l r
+  => RowToList r l
+  => RecAp r l
+  -> f (Record r')
+test' (RecAp rec) = sequenceRecord $ TravRec rec
+
+test''
+  :: forall f r @r' rec
+   . TraversableRecord TravRec f r r'
+  => RecordToRow rec r
+  => rec
+  -> f (Record r')
+test'' = sequenceRecord <<< TravRec <<< toRow
+
+-- testRecAp
+--   :: ?e -- RecAp FooMaybe (Cons "foo" (Maybe Int) (Cons "bar" (Maybe Int) Nil))
+-- testRecAp = RecAp { foo: Just 2, bar: Just 8 }
+
+-- where
+-- -- foo :: Record FooMaybe
+-- foo = { foo: Just 2, bar: Just 8 }
 
 type FooMaybe = (foo :: Maybe Int, bar :: Maybe Int)
 type Foo = (foo :: Int, bar :: Int)
@@ -44,6 +72,10 @@ type Foo = (foo :: Int, bar :: Int)
 
 newtype TravRec :: (Type -> Type) -> Row Type -> Type
 newtype TravRec applic rowAp = TravRec (Record rowAp)
+
+data RecAp :: Row Type -> RowList Type -> Type
+data RecAp row list = RecAp
+  (RowToList row list => ListToRow list row => Record row)
 
 -- ┌───────────────────────────────────────────────────────────────────────────┐
 -- │ Helper classes/instances (RecordOfAp, UnApRecord)                         │
