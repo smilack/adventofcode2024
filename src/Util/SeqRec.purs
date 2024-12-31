@@ -7,6 +7,7 @@ module AdventOfCode.Twenty24.Util.SeqRec
   , main
   , seqrec
   , toRow
+  , toRec
   ) where
 
 import AdventOfCode.Prelude hiding (sequence)
@@ -93,11 +94,13 @@ data RecAp row list = RecAp
 -- └───────────────────────────────────────────────────────────────────────────┘
 
 class RecordToRow :: Type -> Row Type -> Constraint
-class RecordToRow rec row | rec -> row where
+class RecordToRow rec row | rec -> row, row -> rec where
   toRow :: rec -> { | row }
+  toRec :: { | row } -> rec
 
 instance RecordToRow { | row } row where
   toRow = identity
+  toRec = identity
 
 class RecordToList :: Type -> Row Type -> RowList Type -> Constraint
 class
