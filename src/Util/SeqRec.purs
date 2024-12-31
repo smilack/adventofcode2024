@@ -24,36 +24,14 @@ import Type.RowList (class RowListSet, class RowToList, class ListToRow, Cons, N
 main :: Effect Unit
 main = do
   log "SeqRec testing"
-  traceM $ test { foo: Just 2, bar: Just 8 }
-  -- traceM $ sequenceRecord $ TravRec { foo: Just 2, bar: Just 8 }
-  traceM $ test { foo: Just 2, bar: Nothing }
-  traceM $ test { foo: Nothing, bar: Just 8 }
-  traceM $ test' @Maybe @FooMaybe @Foo $ RecAp { foo: Just 2, bar: Just 8 }
-  traceM $ test'' @Foo { foo: Just 2, bar: Just 8 }
-  traceM $ test'' @Foo { foo: Nothing, bar: Just 8 }
-  traceM $ test'' @Foo { foo: Just 2, bar: Nothing }
-  traceM $ test'' @Foo { foo: Nothing, bar: Nothing }
+  traceM $ sequence @FooR { foo: Just 2, bar: Just 8 }
+  traceM $ sequence @FooR { foo: Nothing, bar: Just 8 }
+  traceM $ sequence @FooR { foo: Just 2, bar: Nothing }
+  traceM $ sequence @FooR { foo: Nothing, bar: Nothing }
   log "End"
 
-test :: Record FooMaybe -> Maybe (Record Foo)
-test = sequenceRecord @TravRec @Maybe @FooMaybe @Foo <<< TravRec
-
-test'
-  :: forall @f @r @r' l
-   . TraversableRecord TravRec f r r'
-  => ListToRow l r
-  => RowToList r l
-  => RecAp r l
-  -> f (Record r')
-test' (RecAp rec) = sequenceRecord $ TravRec rec
-
-test''
-  :: forall f r @r' rec
-   . TraversableRecord TravRec f r r'
-  => RecordToRow rec r
-  => rec
-  -> f (Record r')
-test'' = sequenceRecord <<< TravRec <<< toRow
+x :: Maybe FooR
+x = sequence { foo: Just 2, bar: Just 8 }
 
 -- testRecAp
 --   :: ?e -- RecAp FooMaybe (Cons "foo" (Maybe Int) (Cons "bar" (Maybe Int) Nil))
@@ -66,6 +44,8 @@ test'' = sequenceRecord <<< TravRec <<< toRow
 type FooMaybe = (foo :: Maybe Int, bar :: Maybe Int)
 type Foo = (foo :: Int, bar :: Int)
 
+type FooR = { foo :: Int, bar :: Int }
+
 -- ┌─────────────────────────────────────────┐
 -- │ TravRec newtype                         │
 -- ├─────────────────────────────────────────┤
@@ -76,6 +56,20 @@ type Foo = (foo :: Int, bar :: Int)
 
 newtype TravRec :: (Type -> Type) -> Row Type -> Type
 newtype TravRec applic rowAp = TravRec (Record rowAp)
+
+sequence
+  :: forall f (r :: Row Type) (r' :: Row Type) (rec :: Type) (@rec' :: Type)
+   . Applicative f
+  => RecordToRow rec r
+  => RecordToRow rec' r'
+  => TraversableRecord TravRec f r r'
+  => rec
+  -> f rec'
+sequence =
+  map (toRec :: Record r' -> rec')
+    <<< (sequenceRecord @TravRec @f @r @r' :: TravRec f r -> f (Record r'))
+    <<< (TravRec :: Record r -> TravRec f r)
+    <<< (toRow :: rec -> Record r)
 
 data RecAp :: Row Type -> RowList Type -> Type
 data RecAp row list = RecAp
