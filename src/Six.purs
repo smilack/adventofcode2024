@@ -38,6 +38,7 @@ import Node.Encoding (Encoding(..))
 import Node.FS.Aff (readTextFile)
 import Parsing (Parser)
 import Record (insert)
+import Record.Traversable (sequence) as R
 import Type.Proxy (Proxy(..))
 import Type.Row (type (+), class Lacks, class Cons, class Union)
 import Type.RowList as RL
@@ -90,7 +91,7 @@ isRect a b c d =
   --
   near pts f n = (f $ uncurry dist pts) == n
 
-type State2 = Record (St (bumps :: List Coord, poss :: List Coord))
+type State2 = State (bumps :: List Coord, poss :: List Coord)
 
 initialState2 :: Area LabCell -> Maybe State2
 initialState2 =
@@ -133,7 +134,7 @@ solve1 = unwrap
   <<< initialState
   <<< toMap
 
-run :: State -> Area LabCell
+run :: State () -> Area LabCell
 run = go <<< E.Right
   where
   go = case _ of
@@ -145,16 +146,16 @@ run = go <<< E.Right
         Just Visited -> E.Right $ nextMove state
         _ -> E.Left $ A.set pos Visited lab
 
-nextMove :: forall r. Record (St r) -> Record (St r)
+nextMove :: forall r. State r -> State r
 nextMove state@{ lab, pos, dir } = state
   { lab = A.set pos Visited $ A.set (move dir pos) (Guard dir) lab
   , pos = move dir pos
   }
 
-initialState :: Area LabCell -> Maybe State
-initialState lab = seqrec { lab: Just lab } <>? { pos } <>? { dir }
+initialState :: Area LabCell -> Maybe (State ())
+initialState lab = R.sequence { lab: Just lab, pos, dir }
   where
-  start = findWithIndex isGuard =<< Just lab
+  start = findWithIndex isGuard lab
   pos = _.index <$> start
   dir = directionOf =<< _.value <$> start
 
@@ -173,14 +174,12 @@ directionOf = case _ of
   Guard d -> Just d
   _ -> Nothing
 
-type St r =
-  ( pos :: Coord
+type State r =
+  { pos :: Coord
   , lab :: Area LabCell
   , dir :: Direction
   | r
-  )
-
-type State = Record (St ())
+  }
 
 turn :: Direction -> Direction
 turn = case _ of
