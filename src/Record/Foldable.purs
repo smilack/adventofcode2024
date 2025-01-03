@@ -1,6 +1,6 @@
 module Record.Foldable where
 
-import AdventOfCode.Prelude
+import AdventOfCode.Prelude hiding (sequence)
 
 import Data.Symbol (class IsSymbol)
 import Debug (traceM)
@@ -11,47 +11,66 @@ import Type.Proxy (Proxy(..))
 import Type.Row (class Lacks, class Cons)
 import Type.RowList (class ListToRow, class RowToList, Cons, Nil)
 
--- newtype Rec row list = Rec { | row }
-
+-- | Proxy type to hold RowLists
 data RowListProxy :: RowList Type -> Type
 data RowListProxy rlpT = RowListProxy
 
+-- | For some Applicative `ap`, ensure that every value in a Record (specified
+-- | as a proxy with a RowList Type parameter) has type `ap a`.
 class RecordOfAp :: (Type -> Type) -> Type -> Constraint
-class RecordOfAp applic rlpApT
+class RecordOfAp ap rlApV
 
-instance (Applicative f) => RecordOfAp f (RowListProxy Nil)
+instance recordOfApNil :: (Applicative f) => RecordOfAp f (RowListProxy Nil)
 
-instance
-  ( Applicative f
+instance recordOfApCons ::
+  ( Applicative ap
   , IsSymbol k
-  , RecordOfAp f (RowListProxy tail)
+  , RecordOfAp ap (RowListProxy rlApT)
   ) =>
-  RecordOfAp f (RowListProxy (Cons k (f v) tail))
+  RecordOfAp ap (RowListProxy (Cons k (ap v) rlApT))
 
+-- | For some Applicative `ap`, ensure that two Records (specified as a proxies
+-- | with RowList Type parameters) have the same keys and that for each value
+-- | of type `a` in `rlpUnV`, the corresponding value in `rlpApV` has type
+-- | `ap a`.
 class UnApRecord :: (Type -> Type) -> Type -> Type -> Constraint
-class UnApRecord applic rlpApV rlpUnV | applic rlpUnV -> rlpApV
+class UnApRecord ap rlpApV rlpUnV | ap rlpUnV -> rlpApV, ap rlpApV -> rlpUnV
 
-instance
+instance unApRecordNil ::
   ( Applicative f
-  
-instance
-  ( Applicative f
-  , RowToList row rlp
   ) =>
-  UnApRecord f (RowListProxy rlp) row
+  UnApRecord ap (RowListProxy Nil) (RowListProxy Nil)
 
-newtype SeqRec :: (Type -> Type) -> Row Type -> Type
-newtype SeqRec applic rowAp = SeqRec { | rowAp }
+instance unApRecordCons ::
+  ( Applicative ap
+  , IsSymbol k
+  , UnApRecord ap (RowListProxy rlpApT) (RowListProxy rlpUnT)
+  ) =>
+  UnApRecord ap
+    (RowListProxy (Cons k (ap a) rlpApT))
+    (RowListProxy (Cons k a rlpUnT))
 
-class SequenceableRecord :: Type -> Type -> Type -> Constraint
-class SequenceableRecord t rlp rowNoAp where
+-- | Unwrap a `RowListProxy rlpT` and convert `rlpT` to a Row Type.
+class ListProxyToRow :: Type -> Row Type -> Constraint
+class ListProxyToRow rlpV row | row -> rlpV, rlpV -> row
+
+instance (RowToList row rlpT) => ListProxyToRow (RowListProxy rlpT) row
+
+-- | Wrapper to allow writing instances for records.
+newtype SeqRec :: Type -> Type
+newtype SeqRec recAp = SeqRec recAp
+
+-- | Constraints allowing sequencing a record held by a newtype.
+class SequenceableRecord :: (Type -> Type) -> Type -> Type -> Constraint
+class SequenceableRecord t rlpApV rowNoAp where
   sequenceImpl
-    :: forall f rowAp
-     . Applicative f
-    => RecordOfAp f rlp
-    => UnApRecord f rlp rowAp
-    => t f rowAp
-    -> f { | rowNoAp }
+    :: forall ap rowAp rowUn rlpUnT
+     . Applicative ap
+    => ListProxyToRow rlpApV rowAp
+    => RecordOfAp ap rlpApV
+    => UnApRecord ap rlpApV (RowListProxy rlpUnT)
+    => ListToRow rlpUnT rowUn
+    => rlpApV
+    -> t (Record rowAp)
+    -> ap (Record rowUn)
 
--- class TraversableRecord newty applic rowAp rowNoAp where
---   sequenceRecord :: newty applic rowAp -> applic (Record rowNoAp)
